@@ -56,12 +56,14 @@ id_list = []
 
 
 # translate the colors of the rubik's cube into the basic names of the colors
-color_chart = {'white': 'white', 'red3': 'red', 'DarkOrange1': 'orange', 'yellow': 'yellow', 'green3': 'green', 'RoyalBlue4': 'blue'}
+color_chart = {'white': 'white', 'red3': 'red', 'DarkOrange1': 'orange', 'yellow': 'yellow', 'forest green': 'green', 'RoyalBlue4': 'blue'}
 
 
 # to keep count of how many times the Next button has been clicked and get the appropriate index for id_list
-# start at -1 because the initial configuration of the button will increment it to 0, which can get us the first item of id_list
-counter = -1
+# start at -2 because the first click increments it to -1, and the second click starts the configuration and increments it to 0, 
+# which we can use to get the first item of id_list
+counter = -2
+
 
 
 
@@ -74,8 +76,8 @@ def color_generator(color: str) -> str:
     if color == 'DarkOrange1':
         return 'yellow'
     if color == 'yellow':
-        return 'green3'
-    if color == 'green3':
+        return 'forest green'
+    if color == 'forest green':
         return 'RoyalBlue4'
     if color == 'RoyalBlue4':
         return 'white'
@@ -83,9 +85,7 @@ def color_generator(color: str) -> str:
 
 
 def update_cube(list_id: list, dict_id: dict) -> None:
-    '''Update the cube dictionary with the information given from the ID list and dictionary'''
-    print(list_id)
-    print(dict_id)
+    '''Update the cube dictionary with the information given from the ID list and ID dictionary'''
     for each_list in list_id:
         for i in [i for i in range(9) if i != 4]:
             cube[dict_id[each_list[4]]][i + 1] = dict_id[each_list[i]]
@@ -133,33 +133,35 @@ def main_reference() -> None:
     
        
 
-def top_reference(side: str) -> tkinter.Text:
-    '''Draws the reference diagram at the top of the canvas with specified side shaded'''
+def top_reference(side: str, include_text = True) -> tkinter.Text:
+    '''Draws the reference diagram at the top of the canvas with specified side shaded.  Includes text instructions as a default.'''
     # create the outline of the cube
-    left = root_window.canvas.create_polygon(300, 100, 350, 50, 350, 150, 300, 200, 300, 100, fill = '', outline = 'black')
-    bottom = root_window.canvas.create_polygon(350, 150, 300, 200, 400, 200, 450, 150, 350, 150, fill = '', outline = 'black')
-    back = root_window.canvas.create_polygon(350, 50, 350, 150, 450, 150, 450, 50, 350, 50, fill = '', outline = 'black') 
-    front = root_window.canvas.create_polygon(300, 100, 300, 200, 400, 200, 400, 100, 300, 100, fill = '', outline = 'black')  
-    top = root_window.canvas.create_polygon(300, 100, 350, 50, 450, 50, 400, 100, 300, 100, fill = '', outline = 'black')      
-    right = root_window.canvas.create_polygon(400, 100, 450, 50, 450, 150, 400, 200, 400, 100, fill = '', outline = 'black')   
+    back = root_window.canvas.create_polygon(350, 50, 350, 150, 450, 150, 450, 50, 350, 50,fill = 'black',outline = 'black',stipple = 'gray12')
+    left = root_window.canvas.create_polygon(300, 100, 350, 50, 350, 150, 300, 200, 300, 100,fill = 'black',outline = 'black',stipple = 'gray12')
+    bottom = root_window.canvas.create_polygon(350, 150, 300, 200, 400, 200, 450, 150, 350, 150,fill = 'black',outline = 'black',stipple = 'gray12')  
+    top = root_window.canvas.create_polygon(300, 100, 350, 50, 450, 50, 400, 100, 300, 100,fill = 'black',outline = 'black',stipple = 'gray12')  
+    right = root_window.canvas.create_polygon(400, 100, 450, 50, 450, 150, 400, 200, 400, 100,fill = 'black',outline = 'black',stipple = 'gray12')  
+    front = root_window.canvas.create_polygon(300, 100, 300, 200, 400, 200, 400, 100, 300, 100,fill = 'black',outline = 'black',stipple = 'gray12')
     
     # fill in the specified side of the cube with the given parameter
     if side == 'front':
-        root_window.canvas.itemconfig(front, fill = 'red')
+        root_window.canvas.itemconfig(front, fill = 'white', stipple = '')
     if side == 'back':
-        root_window.canvas.itemconfig(back, fill = 'red')
+        root_window.canvas.itemconfig(back, fill = 'yellow', stipple = '')
     if side == 'top':
-        root_window.canvas.itemconfig(top, fill = 'red')
+        root_window.canvas.itemconfig(top, fill = 'RoyalBlue4', stipple = '')
     if side == 'bottom':
-        root_window.canvas.itemconfig(bottom, fill = 'red')
+        root_window.canvas.itemconfig(bottom, fill = 'forest green', stipple = '')
     if side == 'right':
-        root_window.canvas.itemconfig(right, fill = 'red')
+        root_window.canvas.itemconfig(right, fill = 'red3', stipple = '')
     if side == 'left':
-        root_window.canvas.itemconfig(left, fill = 'red')
+        root_window.canvas.itemconfig(left, fill = 'DarkOrange1', stipple = '')
     
     # create text to provide instructions for the user
-    current_side = root_window.canvas.create_text(350, 260, text = 'Please enter cube configuration for the {} side of the cube.'.format(side), font = DEFAULT_FONT)
-    return current_side      # to configure it later when sides are changed
+    if include_text:
+        current_side = root_window.canvas.create_text(350, 260, text = 'Please enter cube configuration for the {} side of the cube.'.format(side),
+                                                       font = DEFAULT_FONT)
+        return current_side      # to configure it later when sides are changed
 
 
 
@@ -299,24 +301,47 @@ def right_setup() -> None:
 
 def front_setup() -> None:
     '''Prompt user for configuration of the front side of the Rubik's cube'''
+    root_window.canvas.delete(tkinter.ALL)      # delete all the text containing the initial instructions
+    
     front_ids = main_reference()
     id_list.append(front_ids)
    
-    root_window.canvas.create_text(350, 280, text = 'Translate what you see onto the figure below.  How the cube sits in your ', font = DEFAULT_FONT)
-    root_window.canvas.create_text(350, 300, text = 'hand right now will be called the "starting position" of the cube.', font = DEFAULT_FONT)
+    root_window.canvas.create_text(350, 280, text = 'Translate what you see onto the figure below.', font = DEFAULT_FONT)
     top_reference('front')
     next_button().configure(command = right_setup)
-    
-    
+
+
+
+def on_second_click(event: tkinter.Event) -> None:
+    '''Clear and unbind the canvas, and start the cube configuration setup for the user'''
+    root_window.canvas.delete(tkinter.ALL)
+    root_window.canvas.unbind('<Button-1>')
+    front_setup()
             
             
             
 def on_first_click(event: tkinter.Event) -> None:
-    '''Clear and unbind the canvas, and start the cube configuration setup'''
+    '''Brief the user on how to hold the Rubik's cube with the correct orientation'''
     root_window.canvas.delete(tkinter.ALL)
     root_window.canvas.unbind('<Button-1>')
-    front_setup()
-    
+    top_reference('top', False)
+    top_reference('right', False)
+    top_reference('front', False)
+    root_window.canvas.create_text(350, 260, text = "SOME RUBIK'S CUBE BASICS:", font = DEFAULT_FONT)
+    root_window.canvas.create_text(350, 290, text = "The center piece on each side determines that side's color.", font = DEFAULT_FONT)
+    root_window.canvas.create_text(350, 310, text = "Blue is across from Green, Red is across from Orange, and", font = DEFAULT_FONT)
+    root_window.canvas.create_text(350, 330, text = 'White is across from Yellow.', font = DEFAULT_FONT)
+    root_window.canvas.create_text(350, 410, text = 'INSTRUCTIONS:', font = DEFAULT_FONT)
+    root_window.canvas.create_text(350, 440, text = '1.  Hold your cube so that the Blue center piece is on top, with White', font = DEFAULT_FONT)
+    root_window.canvas.create_text(350, 460, text = '    facing you and Red on the right (as shown in the model).', font = DEFAULT_FONT)
+    root_window.canvas.create_text(350, 490, text = '2.  (The Orange center piece should now be on your left, Green on the', font = DEFAULT_FONT)
+    root_window.canvas.create_text(350, 510, text = '    bottom, and Yellow should be at the back.)', font = DEFAULT_FONT)
+    root_window.canvas.create_text(350, 540, text = '3.  How the cube sits in your hand right now will be called the', font = DEFAULT_FONT)
+    root_window.canvas.create_text(350, 560, text = '    "starting position" of the cube.  Keep the cube in starting', font = DEFAULT_FONT)
+    root_window.canvas.create_text(350, 580, text = '    position unless instructed otherwise.', font = DEFAULT_FONT)
+    root_window.canvas.create_text(340, 730, text = 'WARNING:  You cannot go back after clicking Next, so please follow instructions carefully :)',
+                                   font = ('Helvetica', 10), fill = 'red')
+    next_button().configure(command = front_setup)
 
     
     
