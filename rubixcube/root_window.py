@@ -20,8 +20,7 @@ canvas.grid(row = 1, column = 0, sticky = tkinter.N + tkinter.S + tkinter.W + tk
 
 # decorate the canvas
 canvas.create_text(350, 280, text = "Welcome to the Rubik's Cube Application!", font = ('Helvetica', 18))
-canvas.create_text(350, 310, text = '(Click to get started)', font = ('Helvetica', 16))
-canvas.create_text(350, 380, text = 'WARNING:     You cannot go back after clicking Next, so please follow instructions carefully :)', font = ('Helvetica', 10), fill = 'red')
+canvas.create_text(350, 330, text = '(Click to get started)', font = ('Helvetica', 16))
 
 
 

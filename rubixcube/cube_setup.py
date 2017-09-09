@@ -55,6 +55,10 @@ id_dict = {}
 id_list = []
 
 
+## id_dict and id_list are continually updated as each of the sides are configured by the user
+## once configuration is finished, information from id_dict and id_list are used to fill out the cube dictionary
+
+
 # translate the colors of the rubik's cube into the basic names of the colors
 color_chart = {'white': 'white', 'red3': 'red', 'DarkOrange1': 'orange', 'yellow': 'yellow', 'forest green': 'green', 'RoyalBlue4': 'blue'}
 
@@ -89,7 +93,6 @@ def update_cube(list_id: list, dict_id: dict) -> None:
     for each_list in list_id:
         for i in [i for i in range(9) if i != 4]:
             cube[dict_id[each_list[4]]][i + 1] = dict_id[each_list[i]]
-    print(cube)
     
         
     
@@ -102,7 +105,7 @@ def change_position_color(event: tkinter.Event) -> None:
     id_dict[int(change[0])] = change[1]
     for x in id_list[counter]:
         if x not in id_dict.keys():
-            id_dict[x] = 'white'
+            id_dict[x] = 'white'     # if a piece was never clicked on, its color is white
 
 
 
@@ -159,9 +162,10 @@ def top_reference(side: str, include_text = True) -> tkinter.Text:
     
     # create text to provide instructions for the user
     if include_text:
-        current_side = root_window.canvas.create_text(350, 260, text = 'Please enter cube configuration for the {} side of the cube.'.format(side),
-                                                       font = DEFAULT_FONT)
-        return current_side      # to configure it later when sides are changed
+        current_side = root_window.canvas.create_text(
+            350, 260, text = 'Please enter cube configuration for the {} side of the cube.'.format(side),font = DEFAULT_FONT)
+        # return current_side to be able to configure it later when sides are changed
+        return current_side      
 
 
 
@@ -182,8 +186,10 @@ def next_button() -> tkinter.Button:
 def cube_check(check: bool) -> None:
     '''If cube was not configured properly, terminate the program. Otherwise proceed with solving cube'''
     if check:
+        # cube was configured properly; proceed to next step
         update_cube(id_list, id_dict)
     else:
+        # cube was not configured properly; terminate the program
         root_window.canvas.create_text(350, 350, text = 'Sorry! I cannot solve this cube.  It was not configured properly.', font = DEFAULT_FONT)
 
 
@@ -202,8 +208,6 @@ def complete_setup() -> None:
         # if not, then the cube does not pass the configuration check
         global pass_check
         pass_check = False
-        if check == {'white': 54} or check == {'red': 1, 'orange': 1, 'yellow': 1, 'green': 1, 'blue': 1, 'white': 49}:
-            pass_check = True
     # call cube_check to take the appropriate actions for the result of the check
     cube_check(pass_check)
     
@@ -272,7 +276,7 @@ def left_setup() -> None:
     
     left_ids = main_reference()
     id_list.append(left_ids)
-  
+    
     if len(id_dict) == 9:
         for x in id_list[counter]:
             id_dict[x] = 'white'
@@ -309,14 +313,6 @@ def front_setup() -> None:
     root_window.canvas.create_text(350, 280, text = 'Translate what you see onto the figure below.', font = DEFAULT_FONT)
     top_reference('front')
     next_button().configure(command = right_setup)
-
-
-
-def on_second_click(event: tkinter.Event) -> None:
-    '''Clear and unbind the canvas, and start the cube configuration setup for the user'''
-    root_window.canvas.delete(tkinter.ALL)
-    root_window.canvas.unbind('<Button-1>')
-    front_setup()
             
             
             
