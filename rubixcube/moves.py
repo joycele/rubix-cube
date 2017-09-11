@@ -8,14 +8,7 @@ Created on Sep 10, 2017
 ##  each method returns an updated Rubik's cube after making its move
 
 
-cube = {'front': {1: 'white1', 2: 'white2', 3: 'white3', 4: 'white4', 5: 'white5', 6: 'white6', 7: 'white7', 8: 'white8', 9: 'white9'},
-        'top': {1: 'blue1', 2: 'blue2', 3: 'blue3', 4: 'blue4', 5: 'blue5', 6: 'blue6', 7: 'blue7', 8: 'blue8', 9: 'blue9'},
-        'right': {1: 'red1', 2: 'red2', 3: 'red3', 4: 'red4', 5: 'red5', 6: 'red6', 7: 'red7', 8: 'red8', 9: 'red9'}, 
-        'left': {1: 'orange1', 2: 'orange2', 3: 'orange3', 4: 'orange4', 5: 'orange5', 6: 'orange6', 7: 'orange7', 8: 'orange8', 9: 'orange9'}, 
-        'back': {1: 'yellow1', 2: 'yellow2', 3: 'yellow3', 4: 'yellow4', 5: 'yellow5', 6: 'yellow6', 7: 'yellow7', 8: 'yellow8', 9: 'yellow9'}, 
-        'bottom': {1: 'green1', 2: 'green2', 3: 'green3', 4: 'green4', 5: 'green5', 6: 'green6', 7: 'green7', 8: 'green8', 9: 'green9'}}
-
-
+# tuples indicating a row or column on the cube
 right = (3,6,9)
 left = (1,4,7)
 top = (1,2,3)
@@ -31,7 +24,7 @@ class Moves:
         self.rubixcube = rubixcube
     
     
-    def R(self) -> dict:
+    def R_AWAY(self) -> dict:
         '''Right --right side should be rotated away from user'''
         original_top = {3: self.rubixcube['top'][3], 6: self.rubixcube['top'][6], 9: self.rubixcube['top'][9]}
         for i in right:
@@ -44,7 +37,7 @@ class Moves:
         return self.rubixcube
     
     
-    def RI(self) -> dict:
+    def R_TOWARDS(self) -> dict:
         '''Right inverted --right side should be rotated towards user'''
         original_top = {3: self.rubixcube['top'][3], 6: self.rubixcube['top'][6], 9: self.rubixcube['top'][9]}
         for pair in zip(right, reversed(left)):
@@ -57,7 +50,7 @@ class Moves:
         return self.rubixcube
     
     
-    def L(self) -> dict:
+    def L_TOWARDS(self) -> dict:
         '''Left --left side should be rotated towards user'''
         original_top = {1: self.rubixcube['top'][1], 4: self.rubixcube['top'][4], 7: self.rubixcube['top'][7]}
         for pair in zip(reversed(right), left):
@@ -70,7 +63,7 @@ class Moves:
         return self.rubixcube
     
     
-    def LI(self) -> dict:
+    def L_AWAY(self) -> dict:
         '''Left inverted --left side should be rotated away from user'''
         original_top = {1: self.rubixcube['top'][1], 4: self.rubixcube['top'][4], 7: self.rubixcube['top'][7]}
         for i in left:
@@ -83,19 +76,7 @@ class Moves:
         return self.rubixcube
     
     
-    def T(self) -> dict:
-        '''Top --top side should be rotated clockwise'''
-        original_front = {1: self.rubixcube['front'][1], 2: self.rubixcube['front'][2], 3: self.rubixcube['front'][3]}
-        for i in top:
-            self.rubixcube['front'][i] = self.rubixcube['right'][i]
-            self.rubixcube['right'][i] = self.rubixcube['back'][i]
-            self.rubixcube['back'][i] = self.rubixcube['left'][i]
-            self.rubixcube['left'][i] = original_front[i]
-        self.rubixcube['top'] = rotate_face('right', self.rubixcube['top'])
-        return self.rubixcube
-        
-    
-    def TI(self) -> dict:
+    def T_COUNTER_CLOCK(self) -> dict:
         '''Top inverted --top side should be rotated counter-clockwise'''
         original_front = {1: self.rubixcube['front'][1], 2: self.rubixcube['front'][2], 3: self.rubixcube['front'][3]}
         for i in top:
@@ -105,9 +86,21 @@ class Moves:
             self.rubixcube['right'][i] = original_front[i]
         self.rubixcube['top'] = rotate_face('left', self.rubixcube['top'])
         return self.rubixcube
+        
+    
+    def T_CLOCK(self) -> dict:
+        '''Top --top side should be rotated clockwise'''
+        original_front = {1: self.rubixcube['front'][1], 2: self.rubixcube['front'][2], 3: self.rubixcube['front'][3]}
+        for i in top:
+            self.rubixcube['front'][i] = self.rubixcube['right'][i]
+            self.rubixcube['right'][i] = self.rubixcube['back'][i]
+            self.rubixcube['back'][i] = self.rubixcube['left'][i]
+            self.rubixcube['left'][i] = original_front[i]
+        self.rubixcube['top'] = rotate_face('right', self.rubixcube['top'])
+        return self.rubixcube
     
     
-    def B(self) -> dict:
+    def BM_RIGHT(self) -> dict:
         '''Bottom --bottom side should be rotated clockwise'''
         original_bottom = {7: self.rubixcube['front'][7], 8: self.rubixcube['front'][8], 9: self.rubixcube['front'][9]}
         for i in bottom:
@@ -119,7 +112,7 @@ class Moves:
         return self.rubixcube
     
     
-    def BI(self) -> dict:
+    def BM_LEFT(self) -> dict:
         '''Bottom inverted --bottom side should be rotated counter-clockwise'''
         original_bottom = {7: self.rubixcube['front'][7], 8: self.rubixcube['front'][8], 9: self.rubixcube['front'][9]}
         for i in bottom:
@@ -131,22 +124,65 @@ class Moves:
         return self.rubixcube
     
     
-    def F(self) -> dict:
+    def F_RIGHT(self) -> dict:
         '''Front --front side should be rotated clockwise'''
         original_top = {7: self.rubixcube['top'][7], 8: self.rubixcube['top'][8], 9: self.rubixcube['top'][9]}
+        for pair in zip(bottom, reversed(right)):
+            self.rubixcube['top'][pair[0]] = self.rubixcube['left'][pair[1]]
+        for pair in zip(right, top):
+            self.rubixcube['left'][pair[0]] = self.rubixcube['bottom'][pair[1]]
+        for pair in zip(top, reversed(left)):
+            self.rubixcube['bottom'][pair[0]] = self.rubixcube['right'][pair[1]]
+        for pair in zip(bottom, left):
+            self.rubixcube['right'][pair[1]] = original_top[pair[0]]
+        self.rubixcube['front'] = rotate_face('right', self.rubixcube['front'])
+        return self.rubixcube
         
     
-    def FI(self) -> dict:
+    def F_LEFT(self) -> dict:
         '''Front inverted --front side should be rotated counter-clockwise'''
-        pass
+        original_top = {7: self.rubixcube['top'][7], 8: self.rubixcube['top'][8], 9: self.rubixcube['top'][9]}
+        for pair in zip(bottom, left):
+            self.rubixcube['top'][pair[0]] = self.rubixcube['right'][pair[1]]
+        for pair in zip(left, reversed(top)):
+            self.rubixcube['right'][pair[0]] = self.rubixcube['bottom'][pair[1]]
+        for pair in zip(top, right):
+            self.rubixcube['bottom'][pair[0]] = self.rubixcube['left'][pair[1]]
+        for pair in zip(right, reversed(bottom)):
+            self.rubixcube['left'][pair[0]] = original_top[pair[1]]
+        self.rubixcube['front'] = rotate_face('left', self.rubixcube['front'])
+        return self.rubixcube
+        
     
-    def BA(self):
+    def BA_LEFT(self):
         '''Back --rotate back piece to the left'''
-        pass
-    
-    def BAI(self):
+        original_top = {1: self.rubixcube['top'][1], 2: self.rubixcube['top'][2], 3: self.rubixcube['top'][3]}
+        for pair in zip(top, right):
+            self.rubixcube['top'][pair[0]] = self.rubixcube['right'][pair[1]]
+        for pair in zip(right, reversed(bottom)):
+            self.rubixcube['right'][pair[0]] = self.rubixcube['bottom'][pair[1]]
+        for pair in zip(bottom, left):
+            self.rubixcube['bottom'][pair[0]] = self.rubixcube['left'][pair[1]]
+        for pair in zip(left, reversed(top)):
+            self.rubixcube['left'][pair[0]] = original_top[pair[1]]
+        self.rubixcube['back'] = rotate_face('right', self.rubixcube['back'])
+        return self.rubixcube
+        
+        
+    def BA_RIGHT(self):
         '''Back inverted --rotate back piece to the right'''
-        pass
+        original_top = {1: self.rubixcube['top'][1], 2: self.rubixcube['top'][2], 3: self.rubixcube['top'][3]}
+        for pair in zip(top, reversed(left)):
+            self.rubixcube['top'][pair[0]] = self.rubixcube['left'][pair[1]]
+        for pair in zip(left, bottom):
+            self.rubixcube['left'][pair[0]] = self.rubixcube['bottom'][pair[1]]
+        for pair in zip(bottom, reversed(right)):
+            self.rubixcube['bottom'][pair[0]] = self.rubixcube['right'][pair[1]]
+        for pair in zip(right, top):
+            self.rubixcube['right'][pair[0]] = original_top[pair[1]]
+        self.rubixcube['back'] = rotate_face('left', self.rubixcube['back'])
+        return self.rubixcube
+        
 
 
 def rotate_face(direction: str, face: dict) -> dict:
@@ -160,16 +196,7 @@ def rotate_face(direction: str, face: dict) -> dict:
         new_face[pair[0]] = face[pair[1]]
     return new_face
             
-    
-    
-    
-    
-
-
-Moves(cube).LI()
-    
-        
-        
+  
         
         
         
