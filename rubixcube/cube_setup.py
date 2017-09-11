@@ -183,6 +183,7 @@ def next_button() -> tkinter.Button:
     return next_button
 
 
+
 def cube_check(check: bool) -> None:
     '''If cube was not configured properly, terminate the program. Otherwise proceed with solving cube'''
     if check:
@@ -191,6 +192,7 @@ def cube_check(check: bool) -> None:
     else:
         # cube was not configured properly; terminate the program
         root_window.canvas.create_text(350, 350, text = 'Sorry! I cannot solve this cube.  It was not configured properly.', font = DEFAULT_FONT)
+
 
 
 def complete_setup() -> None:
@@ -210,108 +212,67 @@ def complete_setup() -> None:
         pass_check = False
     # call cube_check to take the appropriate actions for the result of the check
     cube_check(pass_check)
+
+
+
+def setup_format(side: str, direction: str, check_length: int or None) -> None:
+    '''Prompt user for configuration of the specified side of the Rubik's cube'''
+    root_window.canvas.delete(tkinter.ALL)
+    top_reference(side)
     
+    if side == 'front':
+        root_window.canvas.create_text(350, 280, text = 'Translate what you see onto the figure below.', font = DEFAULT_FONT)
+    else:
+        root_window.canvas.create_text(350, 280, text = 'To do so, rotate the cube {} and translate what'.format(direction), font = DEFAULT_FONT)
+        root_window.canvas.create_text(350, 300, text = 'you see.  Rotate back to starting position once finished.', font = DEFAULT_FONT)
+    
+    ids = main_reference()
+    id_list.append(ids)
+    
+    if len(id_dict) == check_length:
+        for x in id_list[counter]:
+            id_dict[x] = 'white'
+     
      
 
 def back_setup() -> None:
-    '''Prompt user for configuration of the back side of the Rubik's cube'''
-    root_window.canvas.delete(tkinter.ALL)
-    top_reference('back')
-    root_window.canvas.create_text(350, 280, text = 'To do so, rotate the cube to the left twice and translate what', font = DEFAULT_FONT)
-    root_window.canvas.create_text(350, 300, text = 'you see.  Rotate back to starting position once finished.', font = DEFAULT_FONT)
-    
-    back_ids = main_reference()
-    id_list.append(back_ids)
-    
-    if len(id_dict) == 36:
-        for x in id_list[counter]:
-            id_dict[x] = 'white'
-            
+    '''Prompt user for configuration of the back side of the Rubik's cube'''        
+    setup_format('back', 'to the left twice', 36)
     next_button().configure(command = complete_setup)
 
 
 
 def bottom_setup() -> None:
     '''Prompt user for configuration of the bottom side of the Rubik's cube'''
-    root_window.canvas.delete(tkinter.ALL)
-    top_reference('bottom')
-    root_window.canvas.create_text(350, 280, text = 'To do so, rotate the cube upwards once and translate what', font = DEFAULT_FONT)
-    root_window.canvas.create_text(350, 300, text = 'you see.  Rotate back to starting position once finished.', font = DEFAULT_FONT)
-   
-    bottom_ids = main_reference()
-    id_list.append(bottom_ids)
-    
-    if len(id_dict) == 27:
-        for x in id_list[counter]:
-            id_dict[x] = 'white'
-            
+    setup_format('bottom', 'upwards once', 27)
     next_button().configure(command = back_setup)
 
 
 
 def top_setup() -> None:
     '''Prompt user for configuration of the top side of the Rubik's cube'''
-    root_window.canvas.delete(tkinter.ALL)
-    top_reference('top')
-    root_window.canvas.create_text(350, 280, text = 'To do so, rotate the cube downwards once and translate what', font = DEFAULT_FONT)
-    root_window.canvas.create_text(350, 300, text = 'you see.  Rotate back to starting position once finished.', font = DEFAULT_FONT)
-   
-    top_ids = main_reference()
-    id_list.append(top_ids)
-    
-    if len(id_dict) == 18:
-        for x in id_list[counter]:
-            id_dict[x] = 'white'
-            
+    setup_format('top', 'downwards once', 18)
     next_button().configure(command = bottom_setup)
 
 
 
 def left_setup() -> None:
     '''Prompt user for configuration of the left side of the Rubik's cube'''
-    root_window.canvas.delete(tkinter.ALL)
-    top_reference('left')
-    root_window.canvas.create_text(350, 280, text = 'To do so, rotate the cube once to the right and translate what', font = DEFAULT_FONT)
-    root_window.canvas.create_text(350, 300, text = 'you see.  Rotate back to starting position once finished.', font = DEFAULT_FONT)
-    
-    left_ids = main_reference()
-    id_list.append(left_ids)
-    
-    if len(id_dict) == 9:
-        for x in id_list[counter]:
-            id_dict[x] = 'white'
-            
+    setup_format('left', 'once to the right', 9)
     next_button().configure(command = top_setup)
     
     
 
 def right_setup() -> None:
     '''Prompt user for configuration of the right side of the Rubik's cube'''
-    root_window.canvas.delete(tkinter.ALL)
-    top_reference('right')
-    root_window.canvas.create_text(350, 280, text = 'To do so, rotate the cube once to the left and translate what', font = DEFAULT_FONT)
-    root_window.canvas.create_text(350, 300, text = 'you see.  Rotate back to starting position once finished.', font = DEFAULT_FONT)
-    
-    right_ids = main_reference()
-    id_list.append(right_ids)
-    
-    if len(id_dict) == 0:
-        for x in id_list[counter]:
-            id_dict[x] = 'white'
-  
+    setup_format('right', 'once to the left', 0)
     next_button().configure(command = left_setup)
     
     
 
 def front_setup() -> None:
     '''Prompt user for configuration of the front side of the Rubik's cube'''
-    root_window.canvas.delete(tkinter.ALL)      # delete all the text containing the initial instructions
-    
-    front_ids = main_reference()
-    id_list.append(front_ids)
-   
-    root_window.canvas.create_text(350, 280, text = 'Translate what you see onto the figure below.', font = DEFAULT_FONT)
-    top_reference('front')
+    setup_format('front', '', None)
     next_button().configure(command = right_setup)
             
             
@@ -345,8 +306,8 @@ def on_first_click(event: tkinter.Event) -> None:
     
 # bind the root_window canvas to an event (mouse click) to start the application
 root_window.canvas.bind('<Button-1>', on_first_click)
-
-
+ 
+ 
 if __name__ == '__main__':
     root_window.canvas.mainloop() 
         
