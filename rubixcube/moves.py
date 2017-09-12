@@ -154,7 +154,7 @@ class Moves:
         return self.rubixcube
         
     
-    def BA_LEFT(self):
+    def BA_LEFT(self) -> dict:
         '''Back --rotate back piece to the left'''
         original_top = {1: self.rubixcube['top'][1], 2: self.rubixcube['top'][2], 3: self.rubixcube['top'][3]}
         for pair in zip(top, right):
@@ -169,7 +169,7 @@ class Moves:
         return self.rubixcube
         
         
-    def BA_RIGHT(self):
+    def BA_RIGHT(self) -> dict:
         '''Back inverted --rotate back piece to the right'''
         original_top = {1: self.rubixcube['top'][1], 2: self.rubixcube['top'][2], 3: self.rubixcube['top'][3]}
         for pair in zip(top, reversed(left)):
@@ -181,6 +181,48 @@ class Moves:
         for pair in zip(right, top):
             self.rubixcube['right'][pair[0]] = original_top[pair[1]]
         self.rubixcube['back'] = rotate_face('left', self.rubixcube['back'])
+        return self.rubixcube
+    
+    
+    def ROTATE_CLOCK(self) -> dict:
+        '''Rotate the entire cube clockwise once'''
+        original_front = self.rubixcube['front']
+        self.rubixcube['front'] = self.rubixcube['right']
+        self.rubixcube['right'] = self.rubixcube['back']
+        self.rubixcube['back'] = self.rubixcube['left']
+        self.rubixcube['left'] = original_front
+        self.rubixcube['top'] = rotate_face('right', self.rubixcube['top'])
+        self.rubixcube['bottom'] = rotate_face('left', self.rubixcube['bottom'])
+        return self.rubixcube
+    
+    
+    def ROTATE_COUNTER(self) -> dict:
+        '''Rotate the entire cube counter-clockwise once'''
+        original_front = self.rubixcube['front']
+        self.rubixcube['front'] = self.rubixcube['left']
+        self.rubixcube['left'] = self.rubixcube['back']
+        self.rubixcube['back'] = self.rubixcube['right']
+        self.rubixcube['right'] = original_front
+        self.rubixcube['top'] = rotate_face('left', self.rubixcube['top'])
+        self.rubixcube['bottom'] = rotate_face('right', self.rubixcube['bottom'])
+        return self.rubixcube
+    
+    
+    def FLIP(self) -> dict:
+        '''Flip the cube upside down'''
+        # have the user flip it so that Green is now on top, Orange is to the right, and White is at the front
+        rotated_front = rotate_face('right', self.rubixcube['front'])
+        rotated_back = rotate_face('left', self.rubixcube['back'])
+        rotated_top = rotate_face('right', self.rubixcube['top'])
+        rotated_bottom = rotate_face('right',self.rubixcube['bottom'])
+        rotated_left = rotate_face('right', self.rubixcube['left'])
+        rotated_right = rotate_face('right', self.rubixcube['right'])
+        self.rubixcube['top'] = rotate_face('right', rotated_bottom)
+        self.rubixcube['bottom'] = rotate_face('right', rotated_top)
+        self.rubixcube['front'] = rotate_face('right', rotated_front)
+        self.rubixcube['back'] = rotate_face('left', rotated_back)
+        self.rubixcube['left'] = rotate_face('right', rotated_right)
+        self.rubixcube['right'] = rotate_face('right', rotated_left)
         return self.rubixcube
         
 
@@ -197,6 +239,6 @@ def rotate_face(direction: str, face: dict) -> dict:
     return new_face
             
   
-        
+  
         
         
