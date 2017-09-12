@@ -83,6 +83,7 @@ side_cross = {'front': {2: (F_RIGHT, R_TOWARDS, BM_LEFT, R_AWAY), 4: (L_TOWARDS,
                        6: (BA_RIGHT, BM_LEFT, BA_LEFT), 8: (R_AWAY, F_RIGHT, BM_LEFT, F_LEFT, R_TOWARDS)}}
 
 
+
 #===============================================================================
 # # translates each corner piece to the 789 row of that face of the rubik's cube
 # corner_to_789 = {'front': {}}
