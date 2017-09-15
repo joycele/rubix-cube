@@ -30,6 +30,7 @@ left = (1,4,7)
 top = (1,2,3)
 bottom = (7,8,9)
 cross = (2,4,6,8)
+corner = (1,3,7,9)
 
 
 
@@ -84,14 +85,33 @@ side_cross = {'front': {2: (F_RIGHT, R_TOWARDS, BM_LEFT, R_AWAY), 4: (L_TOWARDS,
                        6: (BA_RIGHT, BM_LEFT, BA_LEFT), 8: (R_AWAY, F_RIGHT, BM_LEFT, F_LEFT, R_TOWARDS)}}
 
 
-top corners = {}
+
+# maps the correctly placed bottom corner pieces to the algorithm that will translate it to the top
+corners_79 = {'front': {7: (BM_RIGHT, L_TOWARDS, BM_LEFT, L_AWAY), 9: (BM_LEFT, R_TOWARDS, BM_RIGHT, R_AWAY)}, 
+              'right': {7: (BM_RIGHT, F_RIGHT, BM_LEFT, F_LEFT), 9: (BM_LEFT, BA_RIGHT, BM_RIGHT, BA_LEFT)},
+              'left': {7: (BM_RIGHT, BA_LEFT, BM_LEFT, BA_RIGHT), 9: (BM_LEFT, F_LEFT, BM_RIGHT, F_RIGHT)},
+              'back': {7: (BM_RIGHT, R_AWAY, BM_LEFT, R_TOWARDS), 9: (BM_LEFT, L_AWAY, BM_RIGHT, L_TOWARDS)}}
 
 
 
-#===============================================================================
-# # translates each corner piece to the 789 row of that face of the rubik's cube
-# corner_to_789 = {'front': {}}
-#===============================================================================
+# maps the top 1 and 3 positioned corner pieces to the algorithm that will translate them to spots 7 or 9
+top_13 = {'front': {1: (L_TOWARDS, BM_LEFT, L_AWAY), 3: (R_TOWARDS, BM_RIGHT, R_AWAY)},
+          'right': {1: (F_RIGHT, BM_LEFT, F_LEFT), 3: (BA_RIGHT, BM_RIGHT, BA_LEFT)},
+          'left': {1: (BA_LEFT, BM_LEFT, BA_RIGHT), 3: (F_LEFT, BM_RIGHT, F_RIGHT)},
+          'back': {1: (R_AWAY, BM_LEFT, R_TOWARDS), 3: (L_AWAY, BM_RIGHT, L_TOWARDS)}}
+
+
+
+# maps the corner pieces on the bottom to corners 7 or 9 on the right/left/back/front sides
+bottom_corners = {1: (L_TOWARDS, BM_LEFT, L_AWAY), 3: (R_TOWARDS, BM_RIGHT, R_AWAY), 
+                  7: (L_AWAY, BM_RIGHT, L_TOWARDS), 9: (R_AWAY, BM_LEFT, R_TOWARDS)}
+
+
+
+
+
+
+
 
 
 
@@ -117,7 +137,7 @@ class RubixCube:
                           self.cube_config['left'][3] == 'orange' and self.cube_config['front'][1] == 'white' and
                           self.cube_config['right'][1] == 'red' and self.cube_config['front'][3] == 'white')
         
-        def map_pieces(cube: dict) -> dict:
+        def map_bottom(cube: dict) -> dict:
             '''Map the cross pieces and return a dict of cross pieces mapped to adjacent pieces'''
             crosses = {}
             for face in cube:
@@ -151,7 +171,7 @@ class RubixCube:
         def solve_bottom() -> None:
             '''Solves any piece found on the bottom of the Rubik's cube'''
             while True:
-                bottom_pieces = list(filter(lambda t: t[0][0] == 'bottom', list(map_pieces(self.cube_config).items())))
+                bottom_pieces = list(filter(lambda t: t[0][0] == 'bottom', list(map_bottom(self.cube_config).items())))
                 if len(bottom_pieces) == 0:
                     break
                 algorithm = bottom_cross[bottom_pieces[0][0][1]][bottom_pieces[0][1]]
@@ -161,7 +181,7 @@ class RubixCube:
         def solve_side_crosses() -> None:
             '''Solves any cross pieces found on the right, left, front, or back sides of the cube'''
             while True:
-                remaining_pieces = list(filter(lambda t: t[0][0] not in ('top', 'bottom'), list(map_pieces(self.cube_config).items())))
+                remaining_pieces = list(filter(lambda t: t[0][0] not in ('top', 'bottom'), list(map_bottom(self.cube_config).items())))
                 if len(remaining_pieces) == 0:
                     break
                 algorithm = side_cross[remaining_pieces[0][0][0]][remaining_pieces[0][0][1]]
@@ -175,7 +195,7 @@ class RubixCube:
             if cross_solved:
                 pass
             else:
-                cross_map = list(map_pieces(self.cube_config).items())
+                cross_map = list(map_bottom(self.cube_config).items())
                 initial_top(list(filter(lambda t: t[0][0] == 'top', cross_map)))
                 for algorithm in self.top_steps:
                     self.eval_step(algorithm)
@@ -183,29 +203,6 @@ class RubixCube:
                 solve_side_crosses()
                 print('total steps: ', self.top_steps)
                 print('cube: ', self.cube_config)
-    
-        
-        
-        #=======================================================================
-        # def check_bottom(map: dict) -> dict:
-        #     '''get all the blue pieces on the top or bottom to the correct place'''
-        #     for current in map:
-        #         if current[0] == 'bottom':
-        #             pass
-        # cross_map = map_pieces(self.cube_config)
-        # print(cross_map)        
-        #=======================================================================
-        #=======================================================================
-        # while cross_solved == False:
-        #     current_map = map_pieces(self.cube_config)
-        #     try:
-        #         assert not (self.cube_config['top'][2] == 'blue' and self.cube_config['top'][4] == 'blue' and
-        #                     self.cube_config['top'][6] == 'blue' and self.cube_config['top'][8] == 'blue' and
-        #                     self.cube_config['front'][2] == 'white' and self.cube_config['right'][2] == 'red' and
-        #                     self.cube_config['back'][2] == 'yellow' and self.cube_config['left'][2] == 'orange') 
-        #     except AssertionError:
-        #         cross_solved = True
-        #=======================================================================
             
     
     def SolveMiddle(self) -> dict:
