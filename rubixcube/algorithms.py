@@ -33,12 +33,12 @@ cross = (2,4,6,8)
 
 
 
-cube = {'front': {1: 'white', 2: 'white', 3: 'green', 4: 'red', 5: 'white', 6: 'orange', 7: 'blue', 8: 'orange', 9: 'orange'}, 
-        'top': {1: 'red', 2: 'green', 3: 'white', 4: 'red', 5: 'blue', 6: 'red', 7: 'green', 8: 'green', 9: 'red'}, 
-        'right': {1: 'yellow', 2: 'white', 3: 'orange', 4: 'yellow', 5: 'red', 6: 'green', 7: 'blue', 8: 'blue', 9: 'orange'}, 
-        'left': {1: 'blue', 2: 'blue', 3: 'red', 4: 'yellow', 5: 'orange', 6: 'yellow', 7: 'yellow', 8: 'orange', 9: 'white'}, 
-        'back': {1: 'green', 2: 'orange', 3: 'yellow', 4: 'red', 5: 'yellow', 6: 'green', 7: 'yellow', 8: 'yellow', 9: 'green'}, 
-        'bottom': {1: 'red', 2: 'blue', 3: 'white', 4: 'white', 5: 'green', 6: 'white', 7: 'orange', 8: 'blue', 9: 'blue'}}
+cube = {'front': {1: 'blue', 2: 'yellow', 3: 'yellow', 4: 'blue', 5: 'white', 6: 'white', 7: 'white', 8: 'white', 9: 'red'}, 
+        'top': {1: 'red', 2: 'green', 3: 'yellow', 4: 'blue', 5: 'blue', 6: 'blue', 7: 'white', 8: 'orange', 9: 'blue'}, 
+        'right': {1: 'orange', 2: 'orange', 3: 'red', 4: 'green', 5: 'red', 6: 'white', 7: 'blue', 8: 'yellow', 9: 'yellow'}, 
+        'left': {1: 'green', 2: 'yellow', 3: 'red', 4: 'white', 5: 'orange', 6: 'red', 7: 'white', 8: 'green', 9: 'blue'}, 
+        'back': {1: 'green', 2: 'yellow', 3: 'white', 4: 'red', 5: 'yellow', 6: 'orange', 7: 'orange', 8: 'orange', 9: 'orange'}, 
+        'bottom': {1: 'orange', 2: 'blue', 3: 'yellow', 4: 'red', 5: 'green', 6: 'red', 7: 'green', 8: 'green', 9: 'green'}}
 
 
 
@@ -64,11 +64,12 @@ bottom_cross = {2: {'red': (BM_RIGHT, R_AWAY, R_AWAY), 'orange': (BM_LEFT, L_AWA
 
 
 
-# either maps top pieces to the correct algorithm or to True, meaning the piece is already in the right place
+# either moves an incorrect top piece to the bottom, maps it to True, or moves an incorrect top piece to its correct place on top
 top_cross = {2: {'red': T_CLOCK, 'orange': T_COUNTER_CLOCK, 'white': (T_CLOCK, T_CLOCK), 'yellow': True},
              4: {'red': (T_CLOCK, T_CLOCK), 'orange': True, 'white': T_COUNTER_CLOCK, 'yellow': T_CLOCK},
              6: {'red': True, 'orange': (T_CLOCK, T_CLOCK), 'white': T_CLOCK, 'yellow': T_COUNTER_CLOCK},
-             8: {'red': T_COUNTER_CLOCK, 'orange': T_CLOCK, 'white': True, 'yellow': (T_CLOCK, T_CLOCK)}}
+             8: {'red': T_COUNTER_CLOCK, 'orange': T_CLOCK, 'white': True, 'yellow': (T_CLOCK, T_CLOCK)},
+             'move': {2: (BA_RIGHT, BA_RIGHT), 4: (L_TOWARDS, L_TOWARDS), 6: (R_TOWARDS, R_TOWARDS), 8: (F_RIGHT, F_RIGHT)}}
 
 
 
@@ -81,6 +82,9 @@ side_cross = {'front': {2: (F_RIGHT, R_TOWARDS, BM_LEFT, R_AWAY), 4: (L_TOWARDS,
                        6: (F_LEFT, BM_LEFT, F_RIGHT), 8: (L_AWAY, F_LEFT, BM_RIGHT, F_RIGHT, L_TOWARDS)},
               'right': {2: (R_TOWARDS, F_RIGHT, BM_RIGHT, F_LEFT), 4: (F_RIGHT, BM_RIGHT, F_LEFT),
                        6: (BA_RIGHT, BM_LEFT, BA_LEFT), 8: (R_AWAY, F_RIGHT, BM_LEFT, F_LEFT, R_TOWARDS)}}
+
+
+top corners = {}
 
 
 
@@ -96,29 +100,101 @@ class RubixCube:
     def __init__(self, cube_config: dict):
         '''Initialize the Rubik's cube to contain the current configuration of the cube'''
         self.cube_config = cube_config
-        self.steps = []
+        self.top_steps = []
     
     def SolveTop(self) -> dict:
-        cross_solved = False
-        corners_solved = False
+        '''Solves the top part of the Rubik's cube and returns the updated cube'''
+        
+        cross_solved = (self.cube_config['top'][2] == 'blue' and self.cube_config['top'][4] == 'blue' and
+                        self.cube_config['top'][6] == 'blue' and self.cube_config['top'][8] == 'blue' and
+                        self.cube_config['front'][2] == 'white' and self.cube_config['right'][2] == 'red' and
+                        self.cube_config['back'][2] == 'yellow' and self.cube_config['left'][2] == 'orange')
+        
+        corners_solved = (self.cube_config['top'][1] == 'blue' and self.cube_config['top'][3] == 'blue' and
+                          self.cube_config['top'][7] == 'blue' and self.cube_config['top'][9] == 'blue' and 
+                          self.cube_config['left'][1] == 'orange' and self.cube_config['back'][3] == 'yellow' and
+                          self.cube_config['right'][3] == 'red' and self.cube_config['back'][1] == 'yellow' and
+                          self.cube_config['left'][3] == 'orange' and self.cube_config['front'][1] == 'white' and
+                          self.cube_config['right'][1] == 'red' and self.cube_config['front'][3] == 'white')
         
         def map_pieces(cube: dict) -> dict:
-            '''map the cross pieces and return a dict of cross pieces mapped to adjacent pieces'''
+            '''Map the cross pieces and return a dict of cross pieces mapped to adjacent pieces'''
             crosses = {}
             for face in cube:
                 for position in cross:
                     if cube[face][position] == 'blue':
                         adj = cross_adjacents[face][position]
-                        crosses[(face, position)] = adj + (cube[adj[0]][adj[1]],)
+                        crosses[(face, position)] = cube[adj[0]][adj[1]]
             return crosses
+             
+        def initial_top(top_map: [()]) -> list:
+            '''Takes a list of tuples filtered to contain only top cross pieces and returns a list of algorithms to move them'''
+            if len(top_map) == 4 or len(top_map) == 3:
+                for each in top_map:
+                    if top_cross[each[0][1]][each[1]] != True:
+                        algorithm = top_cross['move'][each[0][1]]
+                        self.top_steps.append(algorithm)
+            if len(top_map) == 2:
+                true_list = [top_cross[top_map[0][0][1]][top_map[0][1]], top_cross[top_map[1][0][1]][top_map[1][1]]]
+                if True not in true_list:
+                    algorithm1 = top_cross['move'][top_map[0][0][1]]
+                    algorithm2 = top_cross[top_map[1][0][1]][top_map[1][1]]
+                    self.top_steps.extend([algorithm1, algorithm2])
+                else:
+                    true_list.remove(True)
+                    if len(true_list) == 1:
+                        self.top_steps.append(true_list[0])
+            if len(top_map) == 1:
+                algorithm = top_cross[top_map[0][0][1]][top_map[0][1]]
+                self.top_steps.append(algorithm) 
         
-        def check_bottom(map: dict) -> dict:
-            '''get all the blue pieces on the top or bottom to the correct place'''
-            for current in map:
-                if current[0] == 'bottom':
-                    pass
-        current_map = map_pieces(self.cube_config)
-        print(current_map)        
+        def solve_bottom() -> None:
+            '''Solves any piece found on the bottom of the Rubik's cube'''
+            while True:
+                bottom_pieces = list(filter(lambda t: t[0][0] == 'bottom', list(map_pieces(self.cube_config).items())))
+                if len(bottom_pieces) == 0:
+                    break
+                algorithm = bottom_cross[bottom_pieces[0][0][1]][bottom_pieces[0][1]]
+                self.top_steps.append(algorithm)
+                self.eval_step(algorithm)
+        
+        def solve_side_crosses() -> None:
+            '''Solves any cross pieces found on the right, left, front, or back sides of the cube'''
+            while True:
+                remaining_pieces = list(filter(lambda t: t[0][0] not in ('top', 'bottom'), list(map_pieces(self.cube_config).items())))
+                if len(remaining_pieces) == 0:
+                    break
+                algorithm = side_cross[remaining_pieces[0][0][0]][remaining_pieces[0][0][1]]
+                self.top_steps.append(algorithm)
+                self.eval_step(algorithm)
+                solve_bottom()
+        
+        if cross_solved + corners_solved == 2:
+            return self.cube_config
+        else:
+            if cross_solved:
+                pass
+            else:
+                cross_map = list(map_pieces(self.cube_config).items())
+                initial_top(list(filter(lambda t: t[0][0] == 'top', cross_map)))
+                for algorithm in self.top_steps:
+                    self.eval_step(algorithm)
+                solve_bottom()
+                solve_side_crosses()
+                print('total steps: ', self.top_steps)
+                print('cube: ', self.cube_config)
+    
+        
+        
+        #=======================================================================
+        # def check_bottom(map: dict) -> dict:
+        #     '''get all the blue pieces on the top or bottom to the correct place'''
+        #     for current in map:
+        #         if current[0] == 'bottom':
+        #             pass
+        # cross_map = map_pieces(self.cube_config)
+        # print(cross_map)        
+        #=======================================================================
         #=======================================================================
         # while cross_solved == False:
         #     current_map = map_pieces(self.cube_config)
@@ -139,11 +215,25 @@ class RubixCube:
         pass
     
     def CheckCube(self) -> bool:
+        '''Checks whether the cube is solved'''
         sides_complete = 0
         for side in self.cube_config:
             if len(set(self.cube_config[side].values())) == 1:
                 sides_complete += 1
         return True if sides_complete == 6 else False
+    
+    def eval_step(self, step: tuple or str) -> None:
+        '''Evaluates the algorithm given'''
+        if type(step) == tuple:
+            for each in step:
+                eval(each)
+        else:
+            eval(step)
+    
+    def return_steps(self, step: str) -> list:
+        '''Returns the list of the algorithms that was used to solve the specified step'''
+        if step == 'top':
+            return self.top_steps
     
     
     
