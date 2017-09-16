@@ -34,12 +34,12 @@ corner = (1,3,7,9)
 
 
 
-cube = {'front': {1: 'red', 2: 'yellow', 3: 'yellow', 4: 'blue', 5: 'white', 6: 'white', 7: 'white', 8: 'white', 9: 'red'}, 
-        'top': {1: 'blue', 2: 'green', 3: 'yellow', 4: 'blue', 5: 'blue', 6: 'blue', 7: 'white', 8: 'orange', 9: 'green'}, 
-        'right': {1: 'orange', 2: 'orange', 3: 'blue', 4: 'green', 5: 'red', 6: 'white', 7: 'white', 8: 'yellow', 9: 'yellow'}, 
-        'left': {1: 'green', 2: 'yellow', 3: 'red', 4: 'white', 5: 'orange', 6: 'red', 7: 'white', 8: 'green', 9: 'blue'}, 
-        'back': {1: 'green', 2: 'yellow', 3: 'white', 4: 'red', 5: 'yellow', 6: 'orange', 7: 'orange', 8: 'orange', 9: 'orange'}, 
-        'bottom': {1: 'orange', 2: 'green', 3: 'yellow', 4: 'red', 5: 'green', 6: 'red', 7: 'green', 8: 'green', 9: 'blue'}}
+cube = {'front': {1: 'blue', 2: 'green', 3: 'red', 4: 'white', 5: 'white', 6: 'blue', 7: 'orange', 8: 'blue', 9: 'yellow'}, 
+        'top': {1: 'red', 2: 'orange', 3: 'orange', 4: 'orange', 5: 'blue', 6: 'red', 7: 'white', 8: 'yellow', 9: 'green'}, 
+        'right': {1: 'white', 2: 'white', 3: 'yellow', 4: 'red', 5: 'red', 6: 'blue', 7: 'blue', 8: 'orange', 9: 'yellow'}, 
+        'left': {1: 'yellow', 2: 'white', 3: 'red', 4: 'red', 5: 'orange', 6: 'blue', 7: 'blue', 8: 'white', 9: 'green'}, 
+        'back': {1: 'green', 2: 'yellow', 3: 'green', 4: 'yellow', 5: 'yellow', 6: 'green', 7: 'red', 8: 'yellow', 9: 'orange'}, 
+        'bottom': {1: 'white', 2: 'orange', 3: 'orange', 4: 'green', 5: 'green', 6: 'green', 7: 'white', 8: 'red', 9: 'blue'}}
 
 
 
@@ -94,17 +94,13 @@ corners_79 = {'front': {7: (BM_RIGHT, L_TOWARDS, BM_LEFT, L_AWAY), 9: (BM_LEFT, 
 
 
 
-# maps the top 1 and 3 positioned corner pieces to the algorithm that will translate them to spots 7 or 9
-top_13 = {'front': {1: (L_TOWARDS, BM_LEFT, L_AWAY), 3: (R_TOWARDS, BM_RIGHT, R_AWAY)},
-          'right': {1: (F_RIGHT, BM_LEFT, F_LEFT), 3: (BA_RIGHT, BM_RIGHT, BA_LEFT)},
-          'left': {1: (BA_LEFT, BM_LEFT, BA_RIGHT), 3: (F_LEFT, BM_RIGHT, F_RIGHT)},
-          'back': {1: (R_AWAY, BM_LEFT, R_TOWARDS), 3: (L_AWAY, BM_RIGHT, L_TOWARDS)}}
-
-
-
-# maps the corner pieces on the bottom to corners 7 or 9 on the right/left/back/front sides
-bottom_corners = {1: (L_TOWARDS, BM_LEFT, L_AWAY), 3: (R_TOWARDS, BM_RIGHT, R_AWAY), 
-                  7: (L_AWAY, BM_RIGHT, L_TOWARDS), 9: (R_AWAY, BM_LEFT, R_TOWARDS)}
+# maps corner pieces from the sides or bottom to the algorithm that will translate them to spots 7 or 9
+to_bottom_row = {'front': {1: (L_TOWARDS, BM_LEFT, L_AWAY), 3: (R_TOWARDS, BM_RIGHT, R_AWAY)},
+                 'right': {1: (F_RIGHT, BM_LEFT, F_LEFT), 3: (BA_RIGHT, BM_RIGHT, BA_LEFT)},
+                 'left': {1: (BA_LEFT, BM_LEFT, BA_RIGHT), 3: (F_LEFT, BM_RIGHT, F_RIGHT)},
+                 'back': {1: (R_AWAY, BM_LEFT, R_TOWARDS), 3: (L_AWAY, BM_RIGHT, L_TOWARDS)},
+                 'bottom': {1: (L_TOWARDS, BM_LEFT, L_AWAY), 3: (R_TOWARDS, BM_RIGHT, R_AWAY),
+                            7: (L_AWAY, BM_RIGHT, L_TOWARDS), 9: (R_AWAY, BM_LEFT, R_TOWARDS)}}
 
 
 
@@ -150,7 +146,12 @@ top_correct = {1: {('back', 3): 'yellow', ('left', 1): 'orange'}, 3: {('back', 1
 
 
 
-
+def translate(adj: tuple) -> tuple:
+    '''Standardizes the the dictionary keys for rotate_bottom'''
+    valid = [('orange', 'white'), ('red', 'white'), ('red', 'yellow'), ('orange', 'yellow')]
+    for x in valid:
+        if x == adj or (x[1], x[0]) == adj:
+            return x 
 
 
 
@@ -219,8 +220,7 @@ class RubixCube:
                 if len(bottom_pieces) == 0:
                     break
                 algorithm = bottom_cross[bottom_pieces[0][0][1]][bottom_pieces[0][1]]
-                self.top_steps.append(algorithm)
-                self._eval_step(algorithm)
+                self._execute(algorithm, self.top_steps) 
         
         def solve_side_crosses() -> None:
             '''Solves any cross pieces found on the right, left, front, or back sides of the cube'''
@@ -229,22 +229,58 @@ class RubixCube:
                 if len(remaining_pieces) == 0:
                     break
                 algorithm = side_cross[remaining_pieces[0][0][0]][remaining_pieces[0][0][1]]
-                self.top_steps.append(algorithm)
-                self._eval_step(algorithm)
+                self._execute(algorithm, self.top_steps) 
                 solve_bottom()
         
-        def solve_corners(corners: list) -> None:
+        def check_corners() -> bool or list:
+            '''Checks whether the corner peices are solved'''
+            correct = 0
+            incorrect = []
+            corner_map = map_blues(corner)
+            for each in corner_map:
+                if each[0] == 'top':
+                    current = list(top_correct[each[1]].items())
+                    if (self.cube_config[current[0][0][0]][current[0][0][1]] == current[0][1] and 
+                        self.cube_config[current[1][0][0]][current[1][0][1]] == current[1][1]):
+                        correct += 1
+                    else:
+                        incorrect.append(each)
+            return True if correct == 4 else incorrect
+     
+        def solve_corners() -> None:
             '''Solves the blue corner pieces'''
-            print(corners)
-        
-        solve_corners(map_blues(corner))
-            
-        
+            check = check_corners()
+            if check == True:
+                return
+            if len(check) == 4:
+                algorithm = move_top[check[0][1]]
+                self._execute(algorithm, self.top_steps)
+            while check_corners() != True: 
+                corner_map = list(filter(lambda t: t[0] != 'top', map_blues(corner)))
+                if corner_map == []:
+                    current = check_corners()[0]
+                    algorithm = move_top[current[1]]
+                    self._execute(algorithm, self.top_steps)
+                else:
+                    bottom_row = list(filter(lambda t: t[0] != 'bottom' and t[1] in (7,9), corner_map))
+                    if bottom_row == []:
+                        algorithm = to_bottom_row[corner_map[0][0]][corner_map[0][1]]
+                        self._execute(algorithm, self.top_steps)
+                    else:
+                        adj = corner_adj[bottom_row[0][0]][bottom_row[0][1]]
+                        adj_colors = self.cube_config[adj[0]][adj[1]], self.cube_config[adj[2]][adj[3]]
+                        spot = rotate_bottom[bottom_row[0][0]][bottom_row[0][1]][translate(adj_colors)]
+                        if spot == True:
+                            algorithm = corners_79[bottom_row[0][0]][bottom_row[0][1]]
+                            self._execute(algorithm, self.top_steps)
+                        else:
+                            self._execute(spot, self.top_steps)
+          
         if cross_solved + corners_solved == 2:
             return self.cube_config
         else:
             if cross_solved:
-                pass
+                solve_corners()
             else:
                 cross_map = list(map_blues(cross).items())
                 initial_top(list(filter(lambda t: t[0][0] == 'top', cross_map)))
@@ -252,6 +288,7 @@ class RubixCube:
                     self._eval_step(algorithm)
                 solve_bottom()
                 solve_side_crosses()
+                solve_corners()
                 print('total steps: ', self.top_steps)
                 print('cube: ', self.cube_config)
             
@@ -277,6 +314,11 @@ class RubixCube:
                 eval(each)
         else:
             eval(step)
+    
+    def _execute(self, alg: tuple or str, steps: list) -> None:
+        '''Appends the algorithm to the list of steps and executes it'''
+        steps.append(alg)
+        self._eval_step(alg)
     
     def _return_steps(self, step: str) -> list:
         '''Returns the list of the algorithms that was used to solve the specified step'''
