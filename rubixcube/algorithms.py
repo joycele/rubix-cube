@@ -34,12 +34,12 @@ corner = (1,3,7,9)
 
 
 
-cube = {'front': {1: 'blue', 2: 'green', 3: 'red', 4: 'white', 5: 'white', 6: 'blue', 7: 'orange', 8: 'blue', 9: 'yellow'}, 
-        'top': {1: 'red', 2: 'orange', 3: 'orange', 4: 'orange', 5: 'blue', 6: 'red', 7: 'white', 8: 'yellow', 9: 'green'}, 
-        'right': {1: 'white', 2: 'white', 3: 'yellow', 4: 'red', 5: 'red', 6: 'blue', 7: 'blue', 8: 'orange', 9: 'yellow'}, 
-        'left': {1: 'yellow', 2: 'white', 3: 'red', 4: 'red', 5: 'orange', 6: 'blue', 7: 'blue', 8: 'white', 9: 'green'}, 
-        'back': {1: 'green', 2: 'yellow', 3: 'green', 4: 'yellow', 5: 'yellow', 6: 'green', 7: 'red', 8: 'yellow', 9: 'orange'}, 
-        'bottom': {1: 'white', 2: 'orange', 3: 'orange', 4: 'green', 5: 'green', 6: 'green', 7: 'white', 8: 'red', 9: 'blue'}}
+cube = {'front': {1: 'red', 2: 'orange', 3: 'blue', 4: 'white', 5: 'white', 6: 'orange', 7: 'orange', 8: 'red', 9: 'blue'}, 
+        'top': {1: 'white', 2: 'white', 3: 'yellow', 4: 'white', 5: 'blue', 6: 'red', 7: 'white', 8: 'yellow', 9: 'yellow'}, 
+        'right': {1: 'red', 2: 'green', 3: 'red', 4: 'blue', 5: 'red', 6: 'blue', 7: 'white', 8: 'green', 9: 'orange'}, 
+        'left': {1: 'green', 2: 'blue', 3: 'green', 4: 'yellow', 5: 'orange', 6: 'red', 7: 'blue', 8: 'red', 9: 'blue'}, 
+        'back': {1: 'green', 2: 'orange', 3: 'orange', 4: 'yellow', 5: 'yellow', 6: 'green', 7: 'green', 8: 'green', 9: 'white'}, 
+        'bottom': {1: 'yellow', 2: 'yellow', 3: 'orange', 4: 'blue', 5: 'green', 6: 'white', 7: 'red', 8: 'orange', 9: 'yellow'}}
 
 
 
@@ -83,6 +83,18 @@ side_cross = {'front': {2: (F_RIGHT, R_TOWARDS, BM_LEFT, R_AWAY), 4: (L_TOWARDS,
                        6: (F_LEFT, BM_LEFT, F_RIGHT), 8: (L_AWAY, F_LEFT, BM_RIGHT, F_RIGHT, L_TOWARDS)},
               'right': {2: (R_TOWARDS, F_RIGHT, BM_RIGHT, F_LEFT), 4: (F_RIGHT, BM_RIGHT, F_LEFT),
                        6: (BA_RIGHT, BM_LEFT, BA_LEFT), 8: (R_AWAY, F_RIGHT, BM_LEFT, F_LEFT, R_TOWARDS)}}
+
+
+
+# checks whether the side cross piece can be moved to the top instead of to the bottom
+side_check = {'front': {4: {'orange': L_AWAY, 'red': False, 'yellow': False, 'white': False},
+                        6: {'orange': False, 'red': R_AWAY, 'yellow': False, 'white': False}}, 
+              'back': {4: {'orange': False, 'red': R_TOWARDS, 'yellow': False, 'white': False}, 
+                       6: {'orange': L_TOWARDS, 'red': False, 'yellow': False, 'white': False}}, 
+              'left': {4: {'orange': False, 'red': False, 'yellow': BA_RIGHT, 'white': False}, 
+                       6: {'orange': False, 'red': False, 'yellow': False, 'white': F_RIGHT}}, 
+              'right': {4: {'orange': False, 'red': False, 'yellow': False, 'white': F_LEFT}, 
+                        6: {'orange': False, 'red': False, 'yellow': BA_LEFT, 'white': False}}}
 
 
 
@@ -228,9 +240,16 @@ class RubixCube:
                 remaining_pieces = list(filter(lambda t: t[0][0] not in ('top', 'bottom'), list(map_blues(cross).items())))
                 if len(remaining_pieces) == 0:
                     break
-                algorithm = side_cross[remaining_pieces[0][0][0]][remaining_pieces[0][0][1]]
-                self._execute(algorithm, self.top_steps) 
-                solve_bottom()
+                side_pieces = list(filter(lambda t: t[0][1] in (4,6), remaining_pieces))
+                good_sides = list(filter(lambda t: side_check[t[0][0]][t[0][1]][t[1]] != False, side_pieces))
+                if len(good_sides) != 0:
+                    for piece in good_sides:
+                        algorithm = side_check[piece[0][0]][piece[0][1]][piece[1]]
+                        self._execute(algorithm, self.top_steps)
+                else:
+                    algorithm = side_cross[remaining_pieces[0][0][0]][remaining_pieces[0][0][1]]
+                    self._execute(algorithm, self.top_steps) 
+                    solve_bottom()
         
         def check_corners() -> bool or list:
             '''Checks whether the corner peices are solved'''
@@ -249,8 +268,11 @@ class RubixCube:
      
         def solve_corners() -> None:
             '''Solves the blue corner pieces'''
+            print('start')
             check = check_corners()
+            print(check)
             if check == True:
+                print('middle')
                 return
             if len(check) == 4:
                 algorithm = move_top[check[0][1]]
@@ -275,6 +297,7 @@ class RubixCube:
                             self._execute(algorithm, self.top_steps)
                         else:
                             self._execute(spot, self.top_steps)
+            print('end')
           
         if cross_solved + corners_solved == 2:
             return self.cube_config
@@ -286,10 +309,11 @@ class RubixCube:
                 initial_top(list(filter(lambda t: t[0][0] == 'top', cross_map)))
                 for algorithm in self.top_steps:
                     self._eval_step(algorithm)
-                solve_bottom()
                 solve_side_crosses()
+                solve_bottom()
                 solve_corners()
                 print('total steps: ', self.top_steps)
+                print('number of algorithms: ', len(self.top_steps))
                 print('cube: ', self.cube_config)
             
     
