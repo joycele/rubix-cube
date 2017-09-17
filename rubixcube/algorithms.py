@@ -24,6 +24,13 @@ ROTATE_COUNTER = 'Moves(self.cube_config).ROTATE_COUNTER()'
 FLIP = 'Moves(self.cube_config).FLIP()'
 
 
+# maps a direction to the complementary direction
+complement = {'BM_LEFT': 'BM_RIGHT', 'BM_RIGHT': 'BM_LEFT', 'F_RIGHT': 'F_LEFT', 'F_LEFT': 'F_RIGHT',
+             'BA_LEFT': 'BA_RIGHT', 'BA_RIGHT': 'BA_LEFT', 'L_AWAY': 'L_TOWARDS', 'L_TOWARDS': 'L_AWAY',
+             'R_AWAY': 'R_TOWARDS', 'R_TOWARDS': 'R_AWAY', 'T_CLOCK': 'T_COUNTER_CLOCK', 'T_COUNTER_CLOCK': 'T_CLOCK',
+             'ROTATE_CLOCK': 'ROTATE_COUNTER', 'ROTATE_COUNTER': 'ROTATE_CLOCK'}
+
+
 # tuples indicating a row or column on the cube
 right = (3,6,9)
 left = (1,4,7)
@@ -34,12 +41,12 @@ corner = (1,3,7,9)
 
 
 
-cube = {'front': {1: 'orange', 2: 'white', 3: 'orange', 4: 'white', 5: 'white', 6: 'white', 7: 'green', 8: 'green', 9: 'orange'}, 
-        'top': {1: 'blue', 2: 'blue', 3: 'blue', 4: 'blue', 5: 'blue', 6: 'blue', 7: 'blue', 8: 'blue', 9: 'blue'}, 
-        'right': {1: 'white', 2: 'red', 3: 'white', 4: 'orange', 5: 'red', 6: 'green', 7: 'white', 8: 'red', 9: 'green'}, 
-        'left': {1: 'yellow', 2: 'orange', 3: 'yellow', 4: 'green', 5: 'orange', 6: 'red', 7: 'yellow', 8: 'yellow', 9: 'orange'}, 
-        'back': {1: 'red', 2: 'yellow', 3: 'red', 4: 'orange', 5: 'yellow', 6: 'white', 7: 'white', 8: 'orange', 9: 'red'}, 
-        'bottom': {1: 'yellow', 2: 'yellow', 3: 'green', 4: 'red', 5: 'green', 6: 'green', 7: 'green', 8: 'yellow', 9: 'red'}}
+cube = {'front': {1: 'red', 2: 'orange', 3: 'white', 4: 'blue', 5: 'white', 6: 'blue', 7: 'blue', 8: 'orange', 9: 'orange'},
+        'top': {1: 'blue', 2: 'white', 3: 'orange', 4: 'red', 5: 'blue', 6: 'yellow', 7: 'blue', 8: 'yellow', 9: 'red'}, 
+        'right': {1: 'green', 2: 'blue', 3: 'blue', 4: 'orange', 5: 'red', 6: 'green', 7: 'green', 8: 'white', 9: 'yellow'}, 
+        'left': {1: 'yellow', 2: 'white', 3: 'white', 4: 'yellow', 5: 'orange', 6: 'red', 7: 'white', 8: 'green', 9: 'orange'},
+        'back': {1: 'yellow', 2: 'blue', 3: 'red', 4: 'red', 5: 'yellow', 6: 'green', 7: 'green', 8: 'yellow', 9: 'orange'},
+        'bottom': {1: 'white', 2: 'white', 3: 'yellow', 4: 'orange', 5: 'green', 6: 'green', 7: 'green', 8: 'red', 9: 'red'}}
 
 
 # maps the adjacent piece of every cross piece on each side
@@ -151,36 +158,37 @@ top_correct = {1: {('back', 3): 'yellow', ('left', 1): 'orange'}, 3: {('back', 1
                7: {('left', 3): 'orange', ('front', 1): 'white'}, 9: {('right', 1): 'red', ('front', 3): 'white'}}
 
 
+# used for when a tuple needs to be used as a dictionary key
 def translate(adj: tuple) -> tuple:
     '''Standardizes the the dictionary keys for rotate_bottom'''
     valid = [('orange', 'white'), ('red', 'white'), ('red', 'yellow'), ('orange', 'yellow')]
     for x in valid:
         if x == adj or (x[1], x[0]) == adj:
             return x 
-
+        
 
 class RubixCube:
-    
+     
     def __init__(self, cube_config: dict):
         '''Initialize the Rubik's cube to contain the current configuration of the cube'''
         self.cube_config = cube_config
         self.top_steps = []
-        
+         
         self.cross_solved = (self.cube_config['top'][2] == 'blue' and self.cube_config['top'][4] == 'blue' and
                              self.cube_config['top'][6] == 'blue' and self.cube_config['top'][8] == 'blue' and
                              self.cube_config['front'][2] == 'white' and self.cube_config['right'][2] == 'red' and
                              self.cube_config['back'][2] == 'yellow' and self.cube_config['left'][2] == 'orange')
-            
+             
         self.corners_solved = (self.cube_config['top'][1] == 'blue' and self.cube_config['top'][3] == 'blue' and
                                self.cube_config['top'][7] == 'blue' and self.cube_config['top'][9] == 'blue' and 
                                self.cube_config['left'][1] == 'orange' and self.cube_config['back'][3] == 'yellow' and
                                self.cube_config['right'][3] == 'red' and self.cube_config['back'][1] == 'yellow' and
                                self.cube_config['left'][3] == 'orange' and self.cube_config['front'][1] == 'white' and
                                self.cube_config['right'][1] == 'red' and self.cube_config['front'][3] == 'white')
-    
+     
     def SolveTop(self) -> dict:
         '''Solves the top part of the Rubik's cube and returns the updated cube'''
-        
+         
         def map_blues(piece_type: tuple) -> dict or list:
             '''Map the blue pieces and return a dict of cross pieces mapped to adjacent pieces or a list of corner pieces
                tupled with their corresponding positions on the cube'''
@@ -195,13 +203,14 @@ class RubixCube:
                         if piece_type == corner:
                             piece_list.append((face, position))
             return piece_dict if piece_type == cross else piece_list
-             
+              
         def initial_top(top_map: [()]) -> list:
             '''Takes a list of tuples filtered to contain only top cross pieces and returns a list of algorithms to move them'''
             if len(top_map) == 4 or len(top_map) == 3:
                 for each in top_map:
                     if top_cross[each[0][1]][each[1]] != True:
                         algorithm = top_cross['move'][each[0][1]]
+                        print('3 or 4 on top, algorithm: ', algorithm)
                         self.top_steps.append(algorithm)
             if len(top_map) == 2:
                 true_list = [top_cross[top_map[0][0][1]][top_map[0][1]], top_cross[top_map[1][0][1]][top_map[1][1]]]
@@ -209,14 +218,17 @@ class RubixCube:
                     algorithm1 = top_cross['move'][top_map[0][0][1]]
                     algorithm2 = top_cross[top_map[1][0][1]][top_map[1][1]]
                     self.top_steps.extend([algorithm1, algorithm2])
+                    print('2 on top none correct, algorithm:', algorithm1, algorithm2)
                 else:
+                    print('2 on top move 1')
                     true_list.remove(True)
                     if len(true_list) == 1:
                         self.top_steps.append(true_list[0])
             if len(top_map) == 1:
                 algorithm = top_cross[top_map[0][0][1]][top_map[0][1]]
+                print('1 on top, algorithm: ', algorithm)
                 self.top_steps.append(algorithm) 
-        
+         
         def solve_bottom() -> None:
             '''Solves any piece found on the bottom of the Rubik's cube'''
             while True:
@@ -225,7 +237,7 @@ class RubixCube:
                     break
                 algorithm = bottom_cross[bottom_pieces[0][0][1]][bottom_pieces[0][1]]
                 self._execute(algorithm, self.top_steps) 
-        
+         
         def solve_side_crosses() -> None:
             '''Solves any cross pieces found on the right, left, front, or back sides of the cube'''
             while True:
@@ -242,7 +254,7 @@ class RubixCube:
                     algorithm = side_cross[remaining_pieces[0][0][0]][remaining_pieces[0][0][1]]
                     self._execute(algorithm, self.top_steps) 
                     solve_bottom()
-        
+         
         def check_corners() -> bool or list:
             '''Checks whether the corner pieces are solved and returns True or a list of top pieces in the wrong place'''
             correct = 0
@@ -257,7 +269,7 @@ class RubixCube:
                     else:
                         incorrect.append(each)
             return True if correct == 4 else incorrect
-     
+      
         def solve_corners() -> None:
             '''Solves the blue corner pieces'''
             check = check_corners()
@@ -276,7 +288,7 @@ class RubixCube:
                     algorithm = move_top[random_top[1]]
                     print('move random_top, algorithm: ', algorithm)
                     self._execute(algorithm, self.top_steps)
-                    print('cube: ', self.cube_config)
+                    print('cube1: ', self.cube_config)
                 else:
                     bottom_row = list(filter(lambda t: t[0] != 'bottom' and t[1] in (7,9), corner_map))
                     print('bottom_row: ', bottom_row)
@@ -291,18 +303,18 @@ class RubixCube:
                                 self.cube_config[check[1][0][0]][check[1][0][1]] == check[1][1]):
                                 self._execute(BM_RIGHT, self.top_steps)
                                 print('ADDED BM_RIGHT')
-                                print('cube: ', self.cube_config)
+                                print('cube2: ', self.cube_config)
                             else:
                                 print('NO')
                                 algorithm = to_bottom_row[piece[0]][piece[1]]
                                 print('bottom row empty, algorithm: ', algorithm)
                                 self._execute(algorithm, self.top_steps)
-                                print('cube: ', self.cube_config)
+                                print('cube3: ', self.cube_config)
                         else:
                             algorithm = to_bottom_row[piece[0]][piece[1]]
                             print('bottom row empty, algorithm: ', algorithm)
                             self._execute(algorithm, self.top_steps)
-                            print('cube: ', self.cube_config)
+                            print('cube4: ', self.cube_config)
                     else:
                         adj = corner_adj[bottom_row[0][0]][bottom_row[0][1]]
                         print('adj: ', adj)
@@ -314,12 +326,14 @@ class RubixCube:
                             algorithm = corners_79[bottom_row[0][0]][bottom_row[0][1]]
                             print('bottom row true, algorithm: ', algorithm)
                             self._execute(algorithm, self.top_steps)
-                            print('cube: ', self.cube_config)
+                            print('cube5: ', self.cube_config)
                         else:
                             ('bottom row move, algorithm: ', spot)
                             self._execute(spot, self.top_steps)
-                            print('cube: ', self.cube_config)
+                            print('cube6: ', self.cube_config)
                 print('--------------------------------------------')
+        print('ORIGINAL CUBE: ', self.cube_config)
+        print('--------------------------------------------')
         if self.cross_solved + self.corners_solved != 2:
             if self.cross_solved:
                 print('CROSS SOLVED')
@@ -329,21 +343,27 @@ class RubixCube:
                 initial_top(list(filter(lambda t: t[0][0] == 'top', cross_map)))
                 for algorithm in self.top_steps:
                     self._eval_step(algorithm)
+                print('initial top: ', self.cube_config)
                 solve_side_crosses()
                 solve_bottom()
+                print('steps: ', self.top_steps)
+                print('FINISH SOLVING CROSS: cube =', self.cube_config)
+                print('--------------------------------------------')
                 solve_corners()
         print('ALGORITHMS: ', self.top_steps)
         print('number of algorithms: ', len(self.top_steps))
-        print('cube: ', self.cube_config)
+        print('ALGORITHMS: ', self._simplify(self.top_steps))
+        print('new number of algorithms: ', len(self.top_steps))
+        print('cube7: ', self.cube_config)
         return self.cube_config
-            
-    
+             
+     
     def SolveMiddle(self) -> dict:
         assert self.cross_solved and self.corners_solved
-    
+     
     def SolveCube(self) -> dict:
         pass
-    
+     
     def CheckCube(self) -> bool:
         '''Checks whether the cube is solved'''
         sides_complete = 0
@@ -351,7 +371,7 @@ class RubixCube:
             if len(set(self.cube_config[side].values())) == 1:
                 sides_complete += 1
         return True if sides_complete == 6 else False
-    
+     
     def _execute(self, alg: tuple or str, steps: list) -> None:
         '''Appends the algorithm to the list of steps and executes it'''
         if type(alg) == tuple:
@@ -361,18 +381,64 @@ class RubixCube:
         else:
             steps.append(alg)
             eval(alg)
+            
+    def _redundancy_two(self, l: list) -> None:
+        '''Gets rid of redundant complementary algorithms'''
+        count = None
+        while count != 0:
+            count = 0
+            for i in range(len(l)):
+                if i == len(l) - 1:
+                    break
+                if l[i][24:-2] == complement[l[i + 1][24:-2]]:
+                    count += 1
+                    del l[i:i+2]
+                    break
     
+    def _redundancy_four(self, l: list) -> None:
+        '''Gets rid of algorithms that appear four times in a row'''
+        count = None
+        while count != 0:
+            count = 0
+        for i in range(len(l)):
+            if i == len(l) - 1:
+                break
+            if l[i] == l[i + 1] == l[i + 2] == l[i + 3]:
+                count += 1
+                del l[i:i+4]
+                break
+    
+    def _redundancy_three(self, l: list) -> None:
+        '''Simplifies algorithms that appear three times in a row'''
+        count = None
+        while count != 0:
+            count = 0
+        for i in range(len(l)):
+            if i == len(l) - 1:
+                break
+            if l[i] == l[i + 1] == l[i + 2]:
+                count += 1
+                replacement = complement[l[i][24:-2]]
+                del l[i:i+3]
+                self.top_steps.insert(i, 'Moves(self.cube_config).' + replacement + '()')
+                break
+            
+    def _simplify(self, l: list) -> list:
+        '''Combines all three redundancy check to simplify the overall list of algorithms'''
+        self._redundancy_four(l)
+        self._redundancy_two(l)
+        self._redundancy_three(l)
+        return l
+ 
     def _return_steps(self, step: str) -> list:
         '''Returns the list of the algorithms that was used to solve the specified step'''
         if step == 'top':
             return self.top_steps
-    
-    
-    
- 
+     
+     
+  
 #cube = RubixCube(cube).SolveTop()
 #print('CUBE: ', cube)
 #cube1 = eval('Moves(cube).R_AWAY()')
 #print(cube1)
 RubixCube(cube).SolveTop()
-
