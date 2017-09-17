@@ -34,12 +34,12 @@ corner = (1,3,7,9)
 
 
 
-cube = {'front': {1: 'red', 2: 'orange', 3: 'blue', 4: 'white', 5: 'white', 6: 'orange', 7: 'orange', 8: 'red', 9: 'blue'}, 
-        'top': {1: 'white', 2: 'white', 3: 'yellow', 4: 'white', 5: 'blue', 6: 'red', 7: 'white', 8: 'yellow', 9: 'yellow'}, 
-        'right': {1: 'red', 2: 'green', 3: 'red', 4: 'blue', 5: 'red', 6: 'blue', 7: 'white', 8: 'green', 9: 'orange'}, 
-        'left': {1: 'green', 2: 'blue', 3: 'green', 4: 'yellow', 5: 'orange', 6: 'red', 7: 'blue', 8: 'red', 9: 'blue'}, 
-        'back': {1: 'green', 2: 'orange', 3: 'orange', 4: 'yellow', 5: 'yellow', 6: 'green', 7: 'green', 8: 'green', 9: 'white'}, 
-        'bottom': {1: 'yellow', 2: 'yellow', 3: 'orange', 4: 'blue', 5: 'green', 6: 'white', 7: 'red', 8: 'orange', 9: 'yellow'}}
+cube = {'front': {1: 'orange', 2: 'white', 3: 'orange', 4: 'white', 5: 'white', 6: 'white', 7: 'green', 8: 'green', 9: 'orange'}, 
+        'top': {1: 'blue', 2: 'blue', 3: 'blue', 4: 'blue', 5: 'blue', 6: 'blue', 7: 'blue', 8: 'blue', 9: 'blue'}, 
+        'right': {1: 'white', 2: 'red', 3: 'white', 4: 'orange', 5: 'red', 6: 'green', 7: 'white', 8: 'red', 9: 'green'}, 
+        'left': {1: 'yellow', 2: 'orange', 3: 'yellow', 4: 'green', 5: 'orange', 6: 'red', 7: 'yellow', 8: 'yellow', 9: 'orange'}, 
+        'back': {1: 'red', 2: 'yellow', 3: 'red', 4: 'orange', 5: 'yellow', 6: 'white', 7: 'white', 8: 'orange', 9: 'red'}, 
+        'bottom': {1: 'yellow', 2: 'yellow', 3: 'green', 4: 'red', 5: 'green', 6: 'green', 7: 'green', 8: 'yellow', 9: 'red'}}
 
 
 # maps the adjacent piece of every cross piece on each side
@@ -265,6 +265,7 @@ class RubixCube:
                 return
             if len(check) == 4:
                 algorithm = move_top[check[0][1]]
+                print('len(check) == 4: ', algorithm)
                 self._execute(algorithm, self.top_steps)
             while check_corners() != True:
                 corner_map = list(filter(lambda t: t[0] != 'top', map_blues(corner)))
@@ -319,10 +320,7 @@ class RubixCube:
                             self._execute(spot, self.top_steps)
                             print('cube: ', self.cube_config)
                 print('--------------------------------------------')
-          
-        if self.cross_solved + self.corners_solved == 2:
-            return self.cube_config
-        else:
+        if self.cross_solved + self.corners_solved != 2:
             if self.cross_solved:
                 print('CROSS SOLVED')
                 solve_corners()
@@ -334,9 +332,10 @@ class RubixCube:
                 solve_side_crosses()
                 solve_bottom()
                 solve_corners()
-                print('total steps: ', self.top_steps)
-                print('number of algorithms: ', len(self.top_steps))
-                print('cube: ', self.cube_config)
+        print('ALGORITHMS: ', self.top_steps)
+        print('number of algorithms: ', len(self.top_steps))
+        print('cube: ', self.cube_config)
+        return self.cube_config
             
     
     def SolveMiddle(self) -> dict:
