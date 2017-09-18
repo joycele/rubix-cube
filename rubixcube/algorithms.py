@@ -363,8 +363,8 @@ class RubixCube:
     def SolveMiddle(self) -> dict:
         '''After the top part of the cube is solved, flip the cube upside down and solve the middle part'''
         assert self.cross_solved and self.corners_solved, 'Top failed to solve'
-        self._execute(FLIP, self.middle_steps) 
-        if self.middle_solved:
+        self._execute(FLIP, self.middle_steps)  # flip cube
+        if self.middle_solved:    # check if middle is already solved
             return self.cube_config
         # find all the middle pieces and their locations first before doing anything
         def find_all() -> list:
@@ -387,14 +387,13 @@ class RubixCube:
                 
         def middle_solved() -> bool:
             '''Determines whether or not the middle part of the cube is solved'''
-            return (self.cube_config['front'][4] == self.cube_config['front'][5] and 
-                    self.cube_config['front'][6] == self.cube_config['front'][5] and 
-                    self.cube_config['right'][4] == self.cube_config['right'][5] and 
-                    self.cube_config['right'][6] == self.cube_config['right'][5] and 
-                    self.cube_config['left'][4] == self.cube_config['left'][5] and 
-                    self.cube_config['left'][6] == self.cube_config['left'][5] and 
-                    self.cube_config['back'][4] == self.cube_config['back'][5] and 
-                    self.cube_config['back'][6] == self.cube_config['back'][5])
+            try:
+                for face in ('front', 'back', 'right', 'left'):
+                    for position in (4,6):
+                        assert self.cube_config[face][position] == self.cube_config[face][5]
+                return True
+            except AssertionError:
+                return False
        
         while not middle_solved():
             middle_pieces = find_all()   # find all the middle pieces
@@ -437,8 +436,33 @@ class RubixCube:
         return self.cube_config
                     
                     
-    def SolveRest(self) -> dict:
+    def SolveTopCross(self) -> dict:
+        '''Solve for the green cross on top'''
         assert self.middle_solved, 'Middle failed to solve'
+        
+        def cross_solved() -> bool:
+            try:
+                for i in (2,3,4,5,7):
+                    assert self.cube_config['top'][i] == 'green'
+                for face in ('front', 'back', 'left', 'right'):
+                    assert self.cube_config[face][2] == self.cube_config[face][5]
+                return True
+            except AssertionError:
+                return False
+        print(self.cube_config)
+        def dot() -> None:
+            pass
+        def L() -> None:
+            pass
+        def line() -> None:
+            pass
+        def cross() -> None:
+            pass
+    
+    def SolveRest(self) -> dict:
+        '''Solve the remaining portion of the cube'''
+        pass
+        
      
     def CheckCube(self) -> bool:
         '''Checks whether the cube is solved'''
@@ -515,7 +539,7 @@ class RubixCube:
   
 RubixCube(cube).SolveTop()
 RubixCube(cube).SolveMiddle()
-RubixCube(cube).SolveRest()
+RubixCube(cube).SolveTopCross()
 
 
 
