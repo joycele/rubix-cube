@@ -31,31 +31,19 @@ complement = {'BM_LEFT': 'BM_RIGHT', 'BM_RIGHT': 'BM_LEFT', 'F_RIGHT': 'F_LEFT',
              'ROTATE_CLOCK': 'ROTATE_COUNTER', 'ROTATE_COUNTER': 'ROTATE_CLOCK'}
 
 
-# tuples indicating a row or column on the cube
-right = (3,6,9)
-left = (1,4,7)
-top = (1,2,3)
-bottom = (7,8,9)
+# tuples indicating the cross and corner indices of the cube
 cross = (2,4,6,8)
 corner = (1,3,7,9)
 
 
 
-cube = {'front': {1: 'red', 2: 'orange', 3: 'white', 4: 'blue', 5: 'white', 6: 'blue', 7: 'blue', 8: 'orange', 9: 'orange'},
-        'top': {1: 'blue', 2: 'white', 3: 'orange', 4: 'red', 5: 'blue', 6: 'yellow', 7: 'blue', 8: 'yellow', 9: 'red'}, 
-        'right': {1: 'green', 2: 'blue', 3: 'blue', 4: 'orange', 5: 'red', 6: 'green', 7: 'green', 8: 'white', 9: 'yellow'}, 
-        'left': {1: 'yellow', 2: 'white', 3: 'white', 4: 'yellow', 5: 'orange', 6: 'red', 7: 'white', 8: 'green', 9: 'orange'},
-        'back': {1: 'yellow', 2: 'blue', 3: 'red', 4: 'red', 5: 'yellow', 6: 'green', 7: 'green', 8: 'yellow', 9: 'orange'},
-        'bottom': {1: 'white', 2: 'white', 3: 'yellow', 4: 'orange', 5: 'green', 6: 'green', 7: 'green', 8: 'red', 9: 'red'}}
+cube = {'front': {1: 'white', 2: 'white', 3: 'white', 4: 'white', 5: 'white', 6: 'white', 7: 'orange', 8: 'orange', 9: 'yellow'},
+        'left': {1: 'orange', 2: 'orange', 3: 'orange', 4: 'green', 5: 'orange', 6: 'orange', 7: 'red', 8: 'red', 9: 'green'}, 
+        'right': {1: 'red', 2: 'red', 3: 'red', 4: 'red', 5: 'red', 6: 'red', 7: 'green', 8: 'green', 9: 'yellow'},
+        'top': {1: 'blue', 2: 'blue', 3: 'blue', 4: 'blue', 5: 'blue', 6: 'blue', 7: 'blue', 8: 'blue', 9: 'blue'},
+        'back': {1: 'yellow', 2: 'yellow', 3: 'yellow', 4: 'yellow', 5: 'yellow', 6: 'yellow', 7: 'orange', 8: 'orange', 9: 'white'},
+        'bottom': {1: 'white', 2: 'yellow', 3: 'red', 4: 'green', 5: 'green', 6: 'white', 7: 'green', 8: 'green', 9: 'green'}}
 
-
-# maps the adjacent piece of every cross piece on each side
-cross_adjacents = {'top': {2: ('back', 2), 4: ('left', 2), 6: ('right', 2), 8: ('front', 2)},
-                   'front': {2: ('top', 8), 4: ('left', 6), 6: ('right', 4), 8: ('bottom', 2)},
-                   'back': {2: ('top', 2), 4: ('right', 6), 6: ('left', 4), 8: ('bottom', 8)},
-                   'bottom': {2: ('front', 8), 4: ('left', 8), 6: ('right', 8), 8: ('back', 8)},
-                   'left': {2: ('top', 4), 4: ('back', 6), 6: ('front', 4), 8: ('bottom', 4)},
-                   'right': {2: ('top', 6), 4: ('front', 6), 6: ('back', 4), 8: ('bottom', 6)}}
 
 
 # maps bottom blue pieces to the correct algorithm that will translate them to the top
@@ -158,6 +146,41 @@ top_correct = {1: {('back', 3): 'yellow', ('left', 1): 'orange'}, 3: {('back', 1
                7: {('left', 3): 'orange', ('front', 1): 'white'}, 9: {('right', 1): 'red', ('front', 3): 'white'}}
 
 
+# left and right algorithms for moving the middle pieces into the correct place
+middle_move = {'left': (T_COUNTER_CLOCK, L_AWAY, T_CLOCK, L_TOWARDS, T_CLOCK, F_RIGHT, T_COUNTER_CLOCK, F_LEFT),
+               'right': (T_CLOCK, R_AWAY, T_COUNTER_CLOCK, R_TOWARDS, T_COUNTER_CLOCK, F_LEFT, T_CLOCK, F_RIGHT)}
+
+
+# rotate top to get the top row middle piece in place
+rotate_top = {2: {'back': True, 'right': T_CLOCK, 'left': T_COUNTER_CLOCK, 'front': (T_CLOCK, T_CLOCK)},
+              4: {'back': T_CLOCK, 'right': (T_CLOCK, T_CLOCK), 'left': True, 'front': T_COUNTER_CLOCK},
+              6: {'back': T_COUNTER_CLOCK, 'right': True, 'left': (T_CLOCK, T_CLOCK), 'front': T_CLOCK},
+              8: {'back': (T_CLOCK, T_CLOCK), 'right': T_COUNTER_CLOCK, 'left': T_CLOCK, 'front': True}}
+
+
+# maps the adjacent piece of every cross piece on each side
+cross_adjacents = {'top': {2: ('back', 2), 4: ('left', 2), 6: ('right', 2), 8: ('front', 2)},
+                   'front': {2: ('top', 8), 4: ('left', 6), 6: ('right', 4), 8: ('bottom', 2)},
+                   'back': {2: ('top', 2), 4: ('right', 6), 6: ('left', 4), 8: ('bottom', 8)},
+                   'bottom': {2: ('front', 8), 4: ('left', 8), 6: ('right', 8), 8: ('back', 8)},
+                   'left': {2: ('top', 4), 4: ('back', 6), 6: ('front', 4), 8: ('bottom', 4)},
+                   'right': {2: ('top', 6), 4: ('front', 6), 6: ('back', 4), 8: ('bottom', 6)}}
+
+
+# solve the middle piece depending on which color it is
+solve_piece = {'white': {'orange': middle_move['right'], 'red': middle_move['left']},
+               'red': {'white': middle_move['right'], 'yellow': middle_move['left']},
+               'orange': {'yellow': middle_move['right'], 'white': middle_move['left']},
+               'yellow': {'red': middle_move['right'], 'orange': middle_move['left']}}
+
+
+# maps the current front face of the cube to the algorithm that will rotate the cube to the desired front face
+rotate_cube = {'white': {'orange': ROTATE_CLOCK, 'red': ROTATE_COUNTER, 'yellow': (ROTATE_CLOCK, ROTATE_CLOCK), 'white': True},
+               'red': {'orange': (ROTATE_CLOCK, ROTATE_CLOCK), 'red': True, 'yellow': ROTATE_COUNTER, 'white': ROTATE_CLOCK},
+               'orange': {'orange': True, 'red': (ROTATE_CLOCK, ROTATE_CLOCK), 'yellow': ROTATE_CLOCK, 'white': ROTATE_COUNTER},
+               'yellow': {'orange': ROTATE_COUNTER, 'red': ROTATE_CLOCK, 'yellow': True, 'white': (ROTATE_CLOCK, ROTATE_CLOCK)}}
+
+
 # used for when a tuple needs to be used as a dictionary key
 def translate(adj: tuple) -> tuple:
     '''Standardizes the the dictionary keys for rotate_bottom'''
@@ -173,6 +196,7 @@ class RubixCube:
         '''Initialize the Rubik's cube to contain the current configuration of the cube'''
         self.cube_config = cube_config
         self.top_steps = []
+        self.middle_steps = []
          
         self.cross_solved = (self.cube_config['top'][2] == 'blue' and self.cube_config['top'][4] == 'blue' and
                              self.cube_config['top'][6] == 'blue' and self.cube_config['top'][8] == 'blue' and
@@ -185,184 +209,236 @@ class RubixCube:
                                self.cube_config['right'][3] == 'red' and self.cube_config['back'][1] == 'yellow' and
                                self.cube_config['left'][3] == 'orange' and self.cube_config['front'][1] == 'white' and
                                self.cube_config['right'][1] == 'red' and self.cube_config['front'][3] == 'white')
-     
+        
+        self.middle_solved = (self.cube_config['front'][4] == self.cube_config['front'][5] and 
+                              self.cube_config['front'][6] == self.cube_config['front'][5] and 
+                              self.cube_config['right'][4] == self.cube_config['right'][5] and 
+                              self.cube_config['right'][6] == self.cube_config['right'][5] and 
+                              self.cube_config['left'][4] == self.cube_config['left'][5] and 
+                              self.cube_config['left'][6] == self.cube_config['left'][5] and 
+                              self.cube_config['back'][4] == self.cube_config['back'][5] and 
+                              self.cube_config['back'][6] == self.cube_config['back'][5])
+        
+        
     def SolveTop(self) -> dict:
         '''Solves the top part of the Rubik's cube and returns the updated cube'''
          
         def map_blues(piece_type: tuple) -> dict or list:
             '''Map the blue pieces and return a dict of cross pieces mapped to adjacent pieces or a list of corner pieces
                tupled with their corresponding positions on the cube'''
-            piece_dict = {}
-            piece_list = []
-            for face in self.cube_config:
+            piece_dict = {}   # dict for returning cross pieces
+            piece_list = []   # list for returning corner pieces
+            for face in self.cube_config: 
                 for position in piece_type:
-                    if self.cube_config[face][position] == 'blue':
-                        if piece_type == cross:
+                    if self.cube_config[face][position] == 'blue':   # find where all the blue's are positioned on the cube
+                        if piece_type == cross:     # if it's a cross piece, add it to piece_dict mapped to its adjacent side
                             adj = cross_adjacents[face][position]
                             piece_dict[(face, position)] = self.cube_config[adj[0]][adj[1]]
-                        if piece_type == corner:
+                        if piece_type == corner:    # if it's a corner piece, append its face and position to the piece_list
                             piece_list.append((face, position))
-            return piece_dict if piece_type == cross else piece_list
+            return piece_dict if piece_type == cross else piece_list   # return the list or dict according to the piece type
               
         def initial_top(top_map: [()]) -> list:
             '''Takes a list of tuples filtered to contain only top cross pieces and returns a list of algorithms to move them'''
-            if len(top_map) == 4 or len(top_map) == 3:
+            if len(top_map) == 4 or len(top_map) == 3:     # if there's 3 or 4 blue cross pieces on top, move them to the bottom
                 for each in top_map:
                     if top_cross[each[0][1]][each[1]] != True:
                         algorithm = top_cross['move'][each[0][1]]
-                        print('3 or 4 on top, algorithm: ', algorithm)
                         self.top_steps.append(algorithm)
-            if len(top_map) == 2:
+            if len(top_map) == 2:     # if there's 2 blue cross pieces on top, find out which ones are in the correct position
                 true_list = [top_cross[top_map[0][0][1]][top_map[0][1]], top_cross[top_map[1][0][1]][top_map[1][1]]]
-                if True not in true_list:
+                if True not in true_list:    # if none are in the correct position, move one down and rotate the other one
                     algorithm1 = top_cross['move'][top_map[0][0][1]]
                     algorithm2 = top_cross[top_map[1][0][1]][top_map[1][1]]
                     self.top_steps.extend([algorithm1, algorithm2])
-                    print('2 on top none correct, algorithm:', algorithm1, algorithm2)
-                else:
-                    print('2 on top move 1')
+                else:     # if one or both are in the correct position, take the appropriate algorithms
                     true_list.remove(True)
                     if len(true_list) == 1:
                         self.top_steps.append(true_list[0])
-            if len(top_map) == 1:
+            if len(top_map) == 1:  # if there's only one cross piece on top, rotate it to the correct spot 
                 algorithm = top_cross[top_map[0][0][1]][top_map[0][1]]
-                print('1 on top, algorithm: ', algorithm)
-                self.top_steps.append(algorithm) 
+                if algorithm != True:   # if it's already in the correct spot, do nothing
+                    self.top_steps.append(algorithm) 
          
         def solve_bottom() -> None:
-            '''Solves any piece found on the bottom of the Rubik's cube'''
+            '''Solves any cross piece found on the bottom of the Rubik's cube'''
             while True:
                 bottom_pieces = list(filter(lambda t: t[0][0] == 'bottom', list(map_blues(cross).items())))
                 if len(bottom_pieces) == 0:
-                    break
+                    break     # if there's no bottom cross piece, break out of the loop
                 algorithm = bottom_cross[bottom_pieces[0][0][1]][bottom_pieces[0][1]]
-                self._execute(algorithm, self.top_steps) 
+                self._execute(algorithm, self.top_steps)     # find the cross pieces and execute the algorithms
          
         def solve_side_crosses() -> None:
             '''Solves any cross pieces found on the right, left, front, or back sides of the cube'''
             while True:
                 remaining_pieces = list(filter(lambda t: t[0][0] not in ('top', 'bottom'), list(map_blues(cross).items())))
-                if len(remaining_pieces) == 0:
-                    break
+                if len(remaining_pieces) == 0: 
+                    break   # if there aren't any side cross pieces, break out of the loop
                 side_pieces = list(filter(lambda t: t[0][1] in (4,6), remaining_pieces))
                 good_sides = list(filter(lambda t: side_check[t[0][0]][t[0][1]][t[1]] != False, side_pieces))
-                if len(good_sides) != 0:
+                # find the good side pieces that are already in the right place
+                if len(good_sides) != 0:   # if none of the side cross pieces are in the right place, rotate them to the bottom
                     for piece in good_sides:
                         algorithm = side_check[piece[0][0]][piece[0][1]][piece[1]]
                         self._execute(algorithm, self.top_steps)
-                else:
+                else:   # rotate the good side pieces to the top
                     algorithm = side_cross[remaining_pieces[0][0][0]][remaining_pieces[0][0][1]]
                     self._execute(algorithm, self.top_steps) 
-                    solve_bottom()
+                    solve_bottom()   # solve any cross piece found on the bottom of the cube
          
         def check_corners() -> bool or list:
             '''Checks whether the corner pieces are solved and returns True or a list of top pieces in the wrong place'''
-            correct = 0
-            incorrect = []
-            corner_map = map_blues(corner)
+            correct = 0   # indicates how many corner pieces are in the correct place
+            incorrect = []   # contains a list of incorrectly placed top corner pieces
+            corner_map = map_blues(corner) 
             for each in corner_map:
-                if each[0] == 'top':
+                if each[0] == 'top':   # find all the top corner pieces
                     current = list(top_correct[each[1]].items())
                     if (self.cube_config[current[0][0][0]][current[0][0][1]] == current[0][1] and 
                         self.cube_config[current[1][0][0]][current[1][0][1]] == current[1][1]):
-                        correct += 1
+                        correct += 1    # add 1 to correct if a corner piece is in the right place
                     else:
-                        incorrect.append(each)
-            return True if correct == 4 else incorrect
+                        incorrect.append(each)   # append it to the incorrect list otherwise
+            return True if correct == 4 else incorrect   # return True if all are in the right place or return the incorrect list
       
         def solve_corners() -> None:
             '''Solves the blue corner pieces'''
-            check = check_corners()
-            if check == True:
+            check = check_corners()  
+            if check == True:   # if every corner is already in the right place, do nothing
                 return
-            if len(check) == 4:
+            if len(check) == 4:  # if there are 4 incorrectly placed corner pieces on top, move one of them down
                 algorithm = move_top[check[0][1]]
-                print('len(check) == 4: ', algorithm)
                 self._execute(algorithm, self.top_steps)
-            while check_corners() != True:
-                corner_map = list(filter(lambda t: t[0] != 'top', map_blues(corner)))
-                print('corner_map: ', corner_map)
-                if corner_map == []:
+            while check_corners() != True:  
+                corner_map = list(filter(lambda t: t[0] != 'top', map_blues(corner)))  # map out the corner pieces not found on top
+                if corner_map == []:   # if none are found, move one of the incorrect top pieces down
                     random_top = check_corners()[0]
-                    print('random_top: ', random_top)
                     algorithm = move_top[random_top[1]]
-                    print('move random_top, algorithm: ', algorithm)
                     self._execute(algorithm, self.top_steps)
-                    print('cube1: ', self.cube_config)
-                else:
+                else:   # find the corner pieces located on the bottom row in positions 7 or 9
                     bottom_row = list(filter(lambda t: t[0] != 'bottom' and t[1] in (7,9), corner_map))
-                    print('bottom_row: ', bottom_row)
-                    if bottom_row == []:
+                    if bottom_row == []:   # if none exist, move a piece to one of those positions
                         piece = corner_map[0]
-                        print('piece: ', piece)
-                        print('bottom ok dict: ', list(bottom_ok[piece[1]].items()))
-                        if piece[0] == 'bottom':
+                        if piece[0] == 'bottom':  # for the bottom pieces, check whether it is okay to move them
                             check = list(bottom_ok[piece[1]].items())
-                            print('check: ', check)
                             if (self.cube_config[check[0][0][0]][check[0][0][1]] == check[0][1] and
                                 self.cube_config[check[1][0][0]][check[1][0][1]] == check[1][1]):
-                                self._execute(BM_RIGHT, self.top_steps)
-                                print('ADDED BM_RIGHT')
-                                print('cube2: ', self.cube_config)
-                            else:
-                                print('NO')
+                                self._execute(BM_RIGHT, self.top_steps)  # if it isn't, move them to the right first
+                            else:   # if it is, execute the algorithms needed to move them
                                 algorithm = to_bottom_row[piece[0]][piece[1]]
-                                print('bottom row empty, algorithm: ', algorithm)
                                 self._execute(algorithm, self.top_steps)
-                                print('cube3: ', self.cube_config)
-                        else:
+                        else:   # for any piece not on the bottom, execute the algorithms needed to move them
                             algorithm = to_bottom_row[piece[0]][piece[1]]
-                            print('bottom row empty, algorithm: ', algorithm)
                             self._execute(algorithm, self.top_steps)
-                            print('cube4: ', self.cube_config)
-                    else:
+                    else:    # if bottom row pieces are found in positions 7 or 9
                         adj = corner_adj[bottom_row[0][0]][bottom_row[0][1]]
-                        print('adj: ', adj)
                         adj_colors = self.cube_config[adj[0]][adj[1]], self.cube_config[adj[2]][adj[3]]
-                        print('adj_colors: ', adj_colors)
                         spot = rotate_bottom[bottom_row[0][0]][bottom_row[0][1]][translate(adj_colors)]
-                        print('spot: ', spot)
-                        if spot == True:
+                        if spot == True:    # if the piece is already in the right place, solve the piece
                             algorithm = corners_79[bottom_row[0][0]][bottom_row[0][1]]
-                            print('bottom row true, algorithm: ', algorithm)
                             self._execute(algorithm, self.top_steps)
-                            print('cube5: ', self.cube_config)
-                        else:
-                            ('bottom row move, algorithm: ', spot)
+                        else:    # if the piece isn't in the right place, rotate the bottom row
                             self._execute(spot, self.top_steps)
-                            print('cube6: ', self.cube_config)
-                print('--------------------------------------------')
-        print('ORIGINAL CUBE: ', self.cube_config)
-        print('--------------------------------------------')
+        
+        # put all the functions defined above together to solve the top part of the cube
         if self.cross_solved + self.corners_solved != 2:
+            # if both cross and corners are already solved, return the cube
             if self.cross_solved:
-                print('CROSS SOLVED')
+                # if the cross is already solved, solve the corners
                 solve_corners()
             else:
+                # if neither cross nor corners are solved, solve for both
                 cross_map = list(map_blues(cross).items())
                 initial_top(list(filter(lambda t: t[0][0] == 'top', cross_map)))
                 for algorithm in self.top_steps:
-                    self._eval_step(algorithm)
-                print('initial top: ', self.cube_config)
+                    self._eval_step(algorithm)   # fix the initial top before preceding with solving the top and corners
+                # move the side cross to the top or bottom, solve the bottom crosses, then solve for the corners
                 solve_side_crosses()
                 solve_bottom()
-                print('steps: ', self.top_steps)
-                print('FINISH SOLVING CROSS: cube =', self.cube_config)
-                print('--------------------------------------------')
                 solve_corners()
-        print('ALGORITHMS: ', self.top_steps)
-        print('number of algorithms: ', len(self.top_steps))
-        print('ALGORITHMS: ', self._simplify(self.top_steps))
-        print('new number of algorithms: ', len(self.top_steps))
-        print('cube7: ', self.cube_config)
         return self.cube_config
              
      
     def SolveMiddle(self) -> dict:
-        assert self.cross_solved and self.corners_solved
-     
-    def SolveCube(self) -> dict:
-        pass
+        '''After the top part of the cube is solved, flip the cube upside down and solve the middle part'''
+        assert self.cross_solved and self.corners_solved, 'Top failed to solve'
+        self._execute(FLIP, self.middle_steps) 
+        if self.middle_solved:
+            return self.cube_config
+        # find all the middle pieces and their locations first before doing anything
+        def find_all() -> list:
+            '''Find all the middle pieces'''
+            result = {}
+            for face in ('right', 'left', 'front', 'back'):
+                for position in (2,4,6):   # find side piece in positions 2, 4, and 6
+                    if self.cube_config[face][position] != 'blue':
+                        adj = cross_adjacents[face][position]
+                        result[(face, position, self.cube_config[face][position])] = self.cube_config[adj[0]][adj[1]]
+            # filter the pieces found so that none of them contain any green (top) pieces
+            no_greens = list(filter(lambda t: t[0][2] != 'green' and t[1] != 'green', result.items()))
+            return no_greens
+        
+        def get_config(color: str) -> dict:
+            '''Get the face of the Rubik's cube depending on the given color'''
+            for face in self.cube_config:
+                if self.cube_config[face][5] == color:
+                    return face
+                
+        def middle_solved() -> bool:
+            '''Determines whether or not the middle part of the cube is solved'''
+            return (self.cube_config['front'][4] == self.cube_config['front'][5] and 
+                    self.cube_config['front'][6] == self.cube_config['front'][5] and 
+                    self.cube_config['right'][4] == self.cube_config['right'][5] and 
+                    self.cube_config['right'][6] == self.cube_config['right'][5] and 
+                    self.cube_config['left'][4] == self.cube_config['left'][5] and 
+                    self.cube_config['left'][6] == self.cube_config['left'][5] and 
+                    self.cube_config['back'][4] == self.cube_config['back'][5] and 
+                    self.cube_config['back'][6] == self.cube_config['back'][5])
+       
+        while not middle_solved():
+            middle_pieces = find_all()   # find all the middle pieces
+            top_pieces = list(filter(lambda t: t[0][1] == 2, middle_pieces))  # filter the middle pieces to get only the top pieces
+            if top_pieces == []:     # if there aren't any top pieces, take the appropriate algorithms
+                if (self.cube_config['front'][4] != self.cube_config['front'][5] and 
+                    self.cube_config['left'][6] != self.cube_config['left'][5]):
+                    algorithm = middle_move['left'][1:]
+                    self._execute(algorithm, self.middle_steps)
+                elif (self.cube_config['front'][6] != self.cube_config['front'][5] and
+                      self.cube_config['right'][4] != self.cube_config['right'][5]):
+                    algorithm = middle_move['right'][1:]
+                    self._execute(algorithm, self.middle_steps)
+                else:   # keep rotating the cube until you find a middle piece in the incorrect place
+                    while True:
+                        self._execute(ROTATE_COUNTER, self.middle_steps)
+                        if (self.cube_config['front'][4] != self.cube_config['front'][5] and
+                            self.cube_config['left'][6] != self.cube_config['left'][5]):
+                            break
+                    algorithm = middle_move['left'][1:]   # move that middle piece to the top
+                    self._execute(algorithm, self.middle_steps)
+            else:    # if there are top pieces, filter them to find the ones already in the correct place
+                correct_piece = list(filter(lambda t: t[0][2] == self.cube_config[t[0][0]][5], top_pieces))
+                if correct_piece == []:    # if none of the top pieces are in the correct place, take the appropriate algorithms
+                    top_piece = top_pieces[0]
+                    adj = cross_adjacents[top_piece[0][0]][top_piece[0][1]]  
+                    algorithm = rotate_top[adj[1]][get_config(top_piece[0][2])]
+                    self._execute(algorithm, self.middle_steps) 
+                else:    # if a top piece is in the correct place, see if any top piece is in front
+                    correct_front = list(filter(lambda t: t[0][0] == 'front', correct_piece))
+                    if correct_front == []:   # if there aren't any front pieces, rotate the cube and solve the piece
+                        piece = correct_piece[0]
+                        new_front = piece[0][2]
+                        rotate_alg = rotate_cube[self.cube_config['front'][5]][new_front]
+                        self._execute(rotate_alg, self.middle_steps) 
+                    else:    # take the appropriate algorithms to solve the front piece
+                        piece = correct_front[0]
+                        algorithm = solve_piece[piece[0][2]][piece[1]]
+                        self._execute(algorithm, self.middle_steps) 
+        return self.cube_config
+                    
+                    
+    def SolveRest(self) -> dict:
+        assert self.middle_solved, 'Middle failed to solve'
      
     def CheckCube(self) -> bool:
         '''Checks whether the cube is solved'''
@@ -437,8 +513,11 @@ class RubixCube:
      
      
   
-#cube = RubixCube(cube).SolveTop()
-#print('CUBE: ', cube)
-#cube1 = eval('Moves(cube).R_AWAY()')
-#print(cube1)
 RubixCube(cube).SolveTop()
+RubixCube(cube).SolveMiddle()
+RubixCube(cube).SolveRest()
+
+
+
+
+
