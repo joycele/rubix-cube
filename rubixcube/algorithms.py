@@ -37,12 +37,12 @@ corner = (1,3,7,9)
 
 
 
-cube = {'front': {1: 'white', 2: 'white', 3: 'white', 4: 'white', 5: 'white', 6: 'white', 7: 'orange', 8: 'orange', 9: 'yellow'},
-        'left': {1: 'orange', 2: 'orange', 3: 'orange', 4: 'green', 5: 'orange', 6: 'orange', 7: 'red', 8: 'red', 9: 'green'}, 
-        'right': {1: 'red', 2: 'red', 3: 'red', 4: 'red', 5: 'red', 6: 'red', 7: 'green', 8: 'green', 9: 'yellow'},
+cube = {'front': {1: 'white', 2: 'white', 3: 'white', 4: 'white', 5: 'white', 6: 'white', 7: 'white', 8: 'green', 9: 'yellow'},
+        'left': {1: 'orange', 2: 'orange', 3: 'orange', 4: 'orange', 5: 'orange', 6: 'orange', 7: 'green', 8: 'green', 9: 'orange'}, 
+        'right': {1: 'red', 2: 'red', 3: 'red', 4: 'red', 5: 'red', 6: 'red', 7: 'green', 8: 'green', 9: 'red'},
         'top': {1: 'blue', 2: 'blue', 3: 'blue', 4: 'blue', 5: 'blue', 6: 'blue', 7: 'blue', 8: 'blue', 9: 'blue'},
-        'back': {1: 'yellow', 2: 'yellow', 3: 'yellow', 4: 'yellow', 5: 'yellow', 6: 'yellow', 7: 'orange', 8: 'orange', 9: 'white'},
-        'bottom': {1: 'white', 2: 'yellow', 3: 'red', 4: 'green', 5: 'green', 6: 'white', 7: 'green', 8: 'green', 9: 'green'}}
+        'back': {1: 'yellow', 2: 'yellow', 3: 'yellow', 4: 'yellow', 5: 'yellow', 6: 'yellow', 7: 'green', 8: 'green', 9: 'orange'},
+        'bottom': {1: 'green', 2: 'yellow', 3: 'red', 4: 'white', 5: 'green', 6: 'orange', 7: 'yellow', 8: 'red', 9: 'white'}}
 
 
 
@@ -181,6 +181,18 @@ rotate_cube = {'white': {'orange': ROTATE_CLOCK, 'red': ROTATE_COUNTER, 'yellow'
                'yellow': {'orange': ROTATE_COUNTER, 'red': ROTATE_CLOCK, 'yellow': True, 'white': (ROTATE_CLOCK, ROTATE_CLOCK)}}
 
 
+# algorithms used after middle portion is solved
+dot_line = (F_RIGHT, R_AWAY, T_CLOCK, R_TOWARDS, T_COUNTER_CLOCK, F_LEFT)
+L_shape = (F_RIGHT, R_AWAY, T_CLOCK, R_TOWARDS, T_COUNTER_CLOCK, R_AWAY, T_CLOCK, R_TOWARDS, T_COUNTER_CLOCK, F_LEFT)
+align_cross = (R_AWAY, T_CLOCK, R_TOWARDS, T_CLOCK, R_AWAY, T_CLOCK, T_CLOCK, R_TOWARDS, T_CLOCK)
+align_corners = (T_CLOCK, R_AWAY, T_COUNTER_CLOCK, L_AWAY, T_CLOCK, R_TOWARDS, T_COUNTER_CLOCK, L_TOWARDS)
+solve_corners = (R_TOWARDS, BM_LEFT, R_AWAY, BM_RIGHT)
+
+
+# rotate the cube according to how the top green pieces are positioned
+L_config = {(2,4): True, (2,6): ROTATE_COUNTER, (4,8): ROTATE_CLOCK, (6,8): (ROTATE_CLOCK, ROTATE_CLOCK), (2,8): ROTATE_CLOCK}
+
+
 # used for when a tuple needs to be used as a dictionary key
 def translate(adj: tuple) -> tuple:
     '''Standardizes the the dictionary keys for rotate_bottom'''
@@ -197,6 +209,8 @@ class RubixCube:
         self.cube_config = cube_config
         self.top_steps = []
         self.middle_steps = []
+        self.cross_steps = []
+        self.finish_steps = []
          
         self.cross_solved = (self.cube_config['top'][2] == 'blue' and self.cube_config['top'][4] == 'blue' and
                              self.cube_config['top'][6] == 'blue' and self.cube_config['top'][8] == 'blue' and
@@ -209,16 +223,6 @@ class RubixCube:
                                self.cube_config['right'][3] == 'red' and self.cube_config['back'][1] == 'yellow' and
                                self.cube_config['left'][3] == 'orange' and self.cube_config['front'][1] == 'white' and
                                self.cube_config['right'][1] == 'red' and self.cube_config['front'][3] == 'white')
-        
-        self.middle_solved = (self.cube_config['front'][4] == self.cube_config['front'][5] and 
-                              self.cube_config['front'][6] == self.cube_config['front'][5] and 
-                              self.cube_config['right'][4] == self.cube_config['right'][5] and 
-                              self.cube_config['right'][6] == self.cube_config['right'][5] and 
-                              self.cube_config['left'][4] == self.cube_config['left'][5] and 
-                              self.cube_config['left'][6] == self.cube_config['left'][5] and 
-                              self.cube_config['back'][4] == self.cube_config['back'][5] and 
-                              self.cube_config['back'][6] == self.cube_config['back'][5])
-        
         
     def SolveTop(self) -> dict:
         '''Solves the top part of the Rubik's cube and returns the updated cube'''
@@ -364,8 +368,7 @@ class RubixCube:
         '''After the top part of the cube is solved, flip the cube upside down and solve the middle part'''
         assert self.cross_solved and self.corners_solved, 'Top failed to solve'
         self._execute(FLIP, self.middle_steps)  # flip cube
-        if self.middle_solved:    # check if middle is already solved
-            return self.cube_config
+        
         # find all the middle pieces and their locations first before doing anything
         def find_all() -> list:
             '''Find all the middle pieces'''
@@ -437,28 +440,45 @@ class RubixCube:
                     
                     
     def SolveTopCross(self) -> dict:
-        '''Solve for the green cross on top'''
-        assert self.middle_solved, 'Middle failed to solve'
-        
+        '''Solve for the green cross on top'''   
         def cross_solved() -> bool:
             try:
-                for i in (2,3,4,5,7):
+                for i in cross:
                     assert self.cube_config['top'][i] == 'green'
-                for face in ('front', 'back', 'left', 'right'):
-                    assert self.cube_config[face][2] == self.cube_config[face][5]
                 return True
             except AssertionError:
                 return False
-        print(self.cube_config)
-        def dot() -> None:
-            pass
-        def L() -> None:
-            pass
-        def line() -> None:
-            pass
-        def cross() -> None:
-            pass
-    
+   
+        def map_greens() -> list:
+            '''Map all the positions of the green pieces at the top of the cube'''
+            return [position for position in cross if self.cube_config['top'][position] == 'green']
+            
+        def solve_L(positions: list) -> None:
+            '''Solve the green L shape'''
+            if L_config[positions] == True:   # if L is in place, call algorithms without rotating cube
+                self._execute(L_shape, self.cross_steps)
+            else:    # otherwise, rotate the cube before properly solving the L
+                self._execute(L_config[positions], self.cross_steps)  
+                self._execute(L_shape, self.cross_steps) 
+                
+        def get_cross(positions: tuple) -> None:
+            if positions == ():   # if there is just a green dot in the center, call an algorithm before solving the L
+                self._execute(dot_line, self.cross_steps)
+                new_positions = tuple(sorted(map_greens()))
+                solve_L(new_positions)
+            if positions in L_config:   # otherwise, solve the L normally
+                solve_L(positions)
+                
+        if cross_solved():   # if the cross is already solved, return the cube
+            return self.cube_config
+        top_map = tuple(sorted(map_greens())) # get a map of the green cross pieces
+        if top_map != cross:
+            get_cross(top_map)
+        if not cross_solved():   # if the cross still isn't solved, the cube wasn't configured/built properly
+            raise InvalidCubeError('Cube configuration is invalid, unable to solve cube')
+        return self.cube_config   
+            
+        
     def SolveRest(self) -> dict:
         '''Solve the remaining portion of the cube'''
         pass
@@ -535,7 +555,10 @@ class RubixCube:
         if step == 'top':
             return self.top_steps
      
-     
+
+class InvalidCubeError(Exception):
+    '''Raised when the cube is configured in an impossible way'''
+    pass
   
 RubixCube(cube).SolveTop()
 RubixCube(cube).SolveMiddle()
