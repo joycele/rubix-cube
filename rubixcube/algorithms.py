@@ -37,12 +37,12 @@ corner = (1,3,7,9)
 
 
 
-cube = {'front': {1: 'white', 2: 'white', 3: 'white', 4: 'white', 5: 'white', 6: 'white', 7: 'white', 8: 'green', 9: 'yellow'},
-        'left': {1: 'orange', 2: 'orange', 3: 'orange', 4: 'orange', 5: 'orange', 6: 'orange', 7: 'green', 8: 'green', 9: 'orange'}, 
-        'right': {1: 'red', 2: 'red', 3: 'red', 4: 'red', 5: 'red', 6: 'red', 7: 'green', 8: 'green', 9: 'red'},
-        'top': {1: 'blue', 2: 'blue', 3: 'blue', 4: 'blue', 5: 'blue', 6: 'blue', 7: 'blue', 8: 'blue', 9: 'blue'},
-        'back': {1: 'yellow', 2: 'yellow', 3: 'yellow', 4: 'yellow', 5: 'yellow', 6: 'yellow', 7: 'green', 8: 'green', 9: 'orange'},
-        'bottom': {1: 'green', 2: 'yellow', 3: 'red', 4: 'white', 5: 'green', 6: 'orange', 7: 'yellow', 8: 'red', 9: 'white'}}
+cube = {'front': {1: 'yellow', 2: 'blue', 3: 'red', 4: 'green', 5: 'white', 6: 'blue', 7: 'orange', 8: 'yellow', 9: 'yellow'},
+        'left': {1: 'red', 2: 'blue', 3: 'orange', 4: 'blue', 5: 'orange', 6: 'white', 7: 'red', 8: 'green', 9: 'green'}, 
+        'right': {1: 'yellow', 2: 'green', 3: 'blue', 4: 'yellow', 5: 'red', 6: 'white', 7: 'blue', 8: 'orange', 9: 'blue'},
+        'top': {1: 'white', 2: 'green', 3: 'white', 4: 'orange', 5: 'blue', 6: 'yellow', 7: 'green', 8: 'white', 9: 'blue'},
+        'back': {1: 'orange', 2: 'orange', 3: 'green', 4: 'red', 5: 'yellow', 6: 'red', 7: 'red', 8: 'yellow', 9: 'green'},
+        'bottom': {1: 'white', 2: 'orange', 3: 'orange', 4: 'red', 5: 'green', 6: 'white', 7: 'yellow', 8: 'red', 9: 'white'}}
 
 
 
@@ -190,7 +190,33 @@ solve_corners = (R_TOWARDS, BM_LEFT, R_AWAY, BM_RIGHT)
 
 
 # rotate the cube according to how the top green pieces are positioned
-L_config = {(2,4): True, (2,6): ROTATE_COUNTER, (4,8): ROTATE_CLOCK, (6,8): (ROTATE_CLOCK, ROTATE_CLOCK), (2,8): ROTATE_CLOCK}
+L_config = {(2,4): True, (2,6): ROTATE_COUNTER, (4,8): ROTATE_CLOCK, (6,8): (ROTATE_CLOCK, ROTATE_CLOCK), 
+            (2,8): ROTATE_CLOCK, (4,6): True}
+
+
+# rotate the cross to get adjacent face pieces in the right spot
+rotate_cross = {(2,4): ROTATE_CLOCK, (2,6): True, (2,8): True, (4,8): (ROTATE_CLOCK, ROTATE_CLOCK), 
+                (6,8): ROTATE_COUNTER, (4,6): ROTATE_CLOCK}
+
+
+# algorithms to rotate the cube to get the corners in the correct position
+rotate_corners = {1: (ROTATE_CLOCK, ROTATE_CLOCK), 3: ROTATE_CLOCK, 7: ROTATE_COUNTER, 9: True}
+
+
+# maps the top corners to their adjacent corners
+top_corner_adj = {1: (('left', 1), ('back', 3)), 3: (('right', 3), ('back', 1)),
+                  7: (('left', 3), ('front', 1)), 9: (('right', 1), ('front', 3))}
+
+
+# maps the corner pieces to the correct spot
+corner_map = {'red': {1: ('green', 'orange', 'yellow'), 3: ('green', 'orange', 'white'),
+                      7: ('green', 'red', 'yellow'), 9: ('green', 'red', 'white')},
+              'white': {1: ('green', 'red', 'yellow'), 3: ('green', 'orange', 'yellow'),
+                        7: ('green', 'red', 'white'), 9: ('green', 'orange', 'white')},
+              'orange': {1: ('green', 'red', 'white'), 3: ('green', 'red', 'yellow'),
+                         7: ('green', 'orange', 'white'), 9: ('green', 'orange', 'yellow')},
+              'yellow': {1: ('green', 'orange', 'white'), 3: ('green', 'red', 'white'),
+                         7: ('green', 'orange', 'yellow'), 9: ('green', 'red', 'yellow')}}
 
 
 # used for when a tuple needs to be used as a dictionary key
@@ -361,7 +387,7 @@ class RubixCube:
                 solve_side_crosses()
                 solve_bottom()
                 solve_corners()
-        return self.cube_config
+        return self.top_steps if len(self.top_steps) < 5 else self._simplify(self.top_steps)
              
      
     def SolveMiddle(self) -> dict:
@@ -436,7 +462,7 @@ class RubixCube:
                         piece = correct_front[0]
                         algorithm = solve_piece[piece[0][2]][piece[1]]
                         self._execute(algorithm, self.middle_steps) 
-        return self.cube_config
+        return self.middle_steps if len(self.middle_steps) < 5 else self._simplify(self.middle_steps)
                     
                     
     def SolveTopCross(self) -> dict:
@@ -455,13 +481,19 @@ class RubixCube:
             
         def solve_L(positions: list) -> None:
             '''Solve the green L shape'''
-            if L_config[positions] == True:   # if L is in place, call algorithms without rotating cube
+            if positions == (4,6):   # use dot_line instead of L_shape
+                self._execute(dot_line, self.cross_steps) 
+            elif positions == (2,8):
+                self._execute(L_config[positions], self.cross_steps) 
+                self._execute(dot_line, self.cross_steps) 
+            elif L_config[positions] == True:   # if L is in place, call algorithms without rotating cube
                 self._execute(L_shape, self.cross_steps)
             else:    # otherwise, rotate the cube before properly solving the L
                 self._execute(L_config[positions], self.cross_steps)  
                 self._execute(L_shape, self.cross_steps) 
                 
         def get_cross(positions: tuple) -> None:
+            '''Solve for the cross on top'''
             if positions == ():   # if there is just a green dot in the center, call an algorithm before solving the L
                 self._execute(dot_line, self.cross_steps)
                 new_positions = tuple(sorted(map_greens()))
@@ -470,19 +502,153 @@ class RubixCube:
                 solve_L(positions)
                 
         if cross_solved():   # if the cross is already solved, return the cube
-            return self.cube_config
+            return self.cross_steps
         top_map = tuple(sorted(map_greens())) # get a map of the green cross pieces
         if top_map != cross:
             get_cross(top_map)
         if not cross_solved():   # if the cross still isn't solved, the cube wasn't configured/built properly
-            raise InvalidCubeError('Cube configuration is invalid, unable to solve cube')
-        return self.cube_config   
+            raise InvalidCubeError('Cube configuration is invalid, unable to solve cube')  
+        return self._simplify(self.cross_steps)
             
         
     def SolveRest(self) -> dict:
         '''Solve the remaining portion of the cube'''
-        pass
+        if self.CheckCube():
+            return self.finish_steps
         
+        def cross_aligned() -> bool:
+            '''Determines whether the top cross and its adjacents are aligned'''
+            try:
+                for face in ('front','back','left','right'):
+                    assert self.cube_config[face][2] == self.cube_config[face][5]
+                return True
+            except AssertionError:
+                return False
+        
+        def get_adj() -> list:
+            '''Get the correctly placed cross adjacent pieces'''
+            cross_adj = [(self.cube_config[face][2],face,cross_adjacents[face][2][1]) for face in ('front','back','left','right')]
+            correct_adj = list(filter(lambda t: self.cube_config[t[1]][5] == t[0], cross_adj))
+            return correct_adj
+        
+        def rotate_top() -> None:
+            '''Rotate the top piece to get correctly placed adjacent pieces'''
+            rotate_top_count = 0
+            top = get_adj()
+            while True:
+                if rotate_top_count == 4:
+                    raise InvalidCubeError('Cube configuration is invalid, unable to solve cube')
+                if len(top) >= 2:
+                    break
+                else:
+                    self._execute(T_CLOCK, self.finish_steps) 
+                    rotate_top_count += 1
+                    top = get_adj()
+            return top
+        
+        def solve_cross_adj(correct_adj: list) -> None:
+            '''Solve for the correct top adjacent cross pieces'''
+            if len(correct_adj) == 3:
+                raise InvalidCubeError('Cube configuration is invalid, unable to solve cube')
+            if len(correct_adj) < 2:
+                correct_adj = rotate_top() # rotate top once if none of the pieces are in place
+            if len(correct_adj) != 4:
+                positions = tuple(sorted([correct_adj[0][2], correct_adj[1][2]]))
+                if rotate_cross[positions] == True:  # align the cross if positions are in place
+                    self._execute(align_cross, self.finish_steps) 
+                    if positions == (2,8):   # if the positions are across from each other, rotate afterwards
+                        self._execute(ROTATE_COUNTER, self.finish_steps)
+                        self._execute(align_cross, self.finish_steps) 
+                else:  # rotate the cross again if none are in place
+                    self._execute(rotate_cross[positions], self.finish_steps) 
+                    self._execute(align_cross, self.finish_steps) 
+                    if positions == (4,6):
+                        self._execute(ROTATE_COUNTER, self.finish_steps)
+                        self._execute(align_cross, self.finish_steps) 
+                if not cross_aligned():  # if the cross still isn't aligned, the cube wasn't configured properly
+                    raise InvalidCubeError('Cube configuration is invalid, unable to solve cube')
+        
+        def get_corners() -> list:
+            '''Get the corner pieces'''
+            result = []
+            for position in corner:
+                first = top_corner_adj[position][0]
+                color1 = self.cube_config[first[0]][first[1]]
+                second = top_corner_adj[position][1]
+                color2 = self.cube_config[second[0]][second[1]]
+                result.append((position, tuple(sorted(list((self.cube_config['top'][position], color1, color2))))))
+            return result
+        
+        # only checks whether the corners are IN PLACE, NOT SOLVED
+        def corners_in_place() -> bool or list:
+            '''Determines whether or not every corner piece is in place'''
+            front = self.cube_config['front'][5]
+            corners = get_corners()
+            try:
+                for each in corners:
+                    assert corner_map[front][each[0]] == each[1]
+                return True
+            except AssertionError:
+                return list(filter(lambda t: corner_map[self.cube_config['front'][5]][t[0]] == t[1], corners))
+        
+        def repeat_alg() -> None:
+            '''Executes the last repeated algorithm'''
+            # rotate the cube according to how the top pieces are arranged
+            greens = sorted([i for i in corner if self.cube_config['top'][i] != 'green'])
+            if greens == [1,3,9] or greens == [1] or greens == [1,3]:
+                self._execute((T_CLOCK, T_CLOCK), self.finish_steps)
+            if greens == [3,9] or greens == [3] or greens == [3,7] or greens == [3,7,9]:
+                self._execute(T_CLOCK, self.finish_steps)
+            if greens == [1,3,7] or greens == [7] or greens == [1,7]:
+                self._execute(T_COUNTER_CLOCK, self.finish_steps)
+            while True:   # repeat the algorithm for solving the cube until the cube is solved
+                if [False for i in range(1,10) if self.cube_config['top'][i] != 'green'] == []:
+                    break
+                elif self.cube_config['top'][9] == 'green':
+                    self._execute(T_COUNTER_CLOCK, self.finish_steps) 
+                else:
+                    self._execute(solve_corners, self.finish_steps) 
+        
+        def last_algorithm() -> None:
+            '''Apply the last algorithm needed to solve the cube once the corner pieces are in place'''
+            repeat_alg()
+            while not self.CheckCube():
+                self._execute(T_COUNTER_CLOCK, self.finish_steps) 
+        
+        def solve_cube() -> None:
+            '''Finish solving the cube'''
+            execute_algorithm = 0   # if the align algorithm is called more than 3 times, 
+            while True:             # the cube was not configured properly
+                if execute_algorithm > 3:
+                    raise InvalidCubeError('Cube configuration is invalid, unable to solve cube')
+                correct_corners = corners_in_place()
+                if correct_corners == True:
+                    last_algorithm()   # if all four corners are in place, call the last algorithm
+                    break
+                elif correct_corners == []:  # align the corners once if none are in place
+                    self._execute(align_corners, self.finish_steps) 
+                    execute_algorithm += 1
+                else:
+                    in_place_corners = list(filter(lambda t: rotate_corners[t[0]] == True, correct_corners))
+                    if in_place_corners == []:  # if the correct corner isn't in position 9, rotate the cube
+                        rotate_alg = rotate_corners[correct_corners[0][0]]
+                        self._execute(rotate_alg, self.finish_steps) 
+                    else:
+                        self._execute(align_corners, self.finish_steps) 
+                        execute_algorithm += 1   
+                        check = corners_in_place()
+                        if check != True:  # align a second time if not every corner is in place
+                            self._execute(align_corners, self.finish_steps) 
+                            execute_algorithm += 1
+            
+        correct_adj = get_adj()
+        if len(correct_adj) == 4:
+            solve_cube()
+        else:
+            solve_cross_adj(correct_adj)
+            solve_cube()
+        return self._simplify(self.finish_steps)
+     
      
     def CheckCube(self) -> bool:
         '''Checks whether the cube is solved'''
@@ -491,6 +657,7 @@ class RubixCube:
             if len(set(self.cube_config[side].values())) == 1:
                 sides_complete += 1
         return True if sides_complete == 6 else False
+     
      
     def _execute(self, alg: tuple or str, steps: list) -> None:
         '''Appends the algorithm to the list of steps and executes it'''
@@ -504,9 +671,13 @@ class RubixCube:
             
     def _redundancy_two(self, l: list) -> None:
         '''Gets rid of redundant complementary algorithms'''
+        if len(l) < 2:
+                return
         count = None
         while count != 0:
             count = 0
+            if len(l) < 2:
+                break
             for i in range(len(l)):
                 if i == len(l) - 1:
                     break
@@ -517,31 +688,35 @@ class RubixCube:
     
     def _redundancy_four(self, l: list) -> None:
         '''Gets rid of algorithms that appear four times in a row'''
+        if len(l) < 4:
+                return
         count = None
         while count != 0:
             count = 0
-        for i in range(len(l)):
-            if i == len(l) - 1:
-                break
-            if l[i] == l[i + 1] == l[i + 2] == l[i + 3]:
-                count += 1
-                del l[i:i+4]
-                break
+            for i in range(len(l)):
+                if i == len(l) - 3:
+                    break
+                if l[i] == l[i + 1] == l[i + 2] == l[i + 3]:
+                    count += 1
+                    del l[i:i+4]
+                    break
     
     def _redundancy_three(self, l: list) -> None:
         '''Simplifies algorithms that appear three times in a row'''
+        if len(l) < 3:
+            return
         count = None
         while count != 0:
             count = 0
-        for i in range(len(l)):
-            if i == len(l) - 1:
-                break
-            if l[i] == l[i + 1] == l[i + 2]:
-                count += 1
-                replacement = complement[l[i][24:-2]]
-                del l[i:i+3]
-                self.top_steps.insert(i, 'Moves(self.cube_config).' + replacement + '()')
-                break
+            for i in range(len(l)):
+                if i == len(l) - 2:
+                    break
+                if l[i] == l[i + 1] == l[i + 2]:
+                    count += 1
+                    replacement = complement[l[i][24:-2]]
+                    del l[i:i+3]
+                    self.top_steps.insert(i, 'Moves(self.cube_config).' + replacement + '()')
+                    break
             
     def _simplify(self, l: list) -> list:
         '''Combines all three redundancy check to simplify the overall list of algorithms'''
@@ -550,21 +725,25 @@ class RubixCube:
         self._redundancy_three(l)
         return l
  
-    def _return_steps(self, step: str) -> list:
-        '''Returns the list of the algorithms that was used to solve the specified step'''
-        if step == 'top':
-            return self.top_steps
-     
 
 class InvalidCubeError(Exception):
     '''Raised when the cube is configured in an impossible way'''
     pass
   
-RubixCube(cube).SolveTop()
-RubixCube(cube).SolveMiddle()
-RubixCube(cube).SolveTopCross()
 
-
-
-
-
+print('ORIGINAL CUBE:')
+for face in cube:
+    print(face, cube[face])
+print('---------------------------------')
+top = RubixCube(cube).SolveTop()
+middle = RubixCube(cube).SolveMiddle()
+cross = RubixCube(cube).SolveTopCross()
+finish = RubixCube(cube).SolveRest()
+print('ALGORITHMS:')
+for each in (top + middle + cross + finish):
+    print(each)
+print('number of algorithms: ', len(top + middle + cross + finish))
+print('---------------------------------')
+print('END RESULT CUBE:')
+for face in cube:
+    print(face, cube[face])
