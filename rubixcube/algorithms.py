@@ -24,6 +24,7 @@ ROTATE_COUNTER = 'Moves(self.cube_config).ROTATE_COUNTER()'
 FLIP = 'Moves(self.cube_config).FLIP()'
 
 
+
 # maps a direction to the complementary direction
 complement = {'BM_LEFT': 'BM_RIGHT', 'BM_RIGHT': 'BM_LEFT', 'F_RIGHT': 'F_LEFT', 'F_LEFT': 'F_RIGHT',
              'BA_LEFT': 'BA_RIGHT', 'BA_RIGHT': 'BA_LEFT', 'L_AWAY': 'L_TOWARDS', 'L_TOWARDS': 'L_AWAY',
@@ -34,16 +35,6 @@ complement = {'BM_LEFT': 'BM_RIGHT', 'BM_RIGHT': 'BM_LEFT', 'F_RIGHT': 'F_LEFT',
 # tuples indicating the cross and corner indices of the cube
 cross = (2,4,6,8)
 corner = (1,3,7,9)
-
-
-
-cube = {'front': {1: 'yellow', 2: 'blue', 3: 'red', 4: 'green', 5: 'white', 6: 'blue', 7: 'orange', 8: 'yellow', 9: 'yellow'},
-        'left': {1: 'red', 2: 'blue', 3: 'orange', 4: 'blue', 5: 'orange', 6: 'white', 7: 'red', 8: 'green', 9: 'green'}, 
-        'right': {1: 'yellow', 2: 'green', 3: 'blue', 4: 'yellow', 5: 'red', 6: 'white', 7: 'blue', 8: 'orange', 9: 'blue'},
-        'top': {1: 'white', 2: 'green', 3: 'white', 4: 'orange', 5: 'blue', 6: 'yellow', 7: 'green', 8: 'white', 9: 'blue'},
-        'back': {1: 'orange', 2: 'orange', 3: 'green', 4: 'red', 5: 'yellow', 6: 'red', 7: 'red', 8: 'yellow', 9: 'green'},
-        'bottom': {1: 'white', 2: 'orange', 3: 'orange', 4: 'red', 5: 'green', 6: 'white', 7: 'yellow', 8: 'red', 9: 'white'}}
-
 
 
 # maps bottom blue pieces to the correct algorithm that will translate them to the top
@@ -252,7 +243,6 @@ class RubixCube:
         
     def SolveTop(self) -> dict:
         '''Solves the top part of the Rubik's cube and returns the updated cube'''
-         
         def map_blues(piece_type: tuple) -> dict or list:
             '''Map the blue pieces and return a dict of cross pieces mapped to adjacent pieces or a list of corner pieces
                tupled with their corresponding positions on the cube'''
@@ -348,6 +338,8 @@ class RubixCube:
                     self._execute(algorithm, self.top_steps)
                 else:   # find the corner pieces located on the bottom row in positions 7 or 9
                     bottom_row = list(filter(lambda t: t[0] != 'bottom' and t[1] in (7,9), corner_map))
+                    print('bottom row: ', bottom_row)
+                    print('ALGORITHM PROBLEM')
                     if bottom_row == []:   # if none exist, move a piece to one of those positions
                         piece = corner_map[0]
                         if piece[0] == 'bottom':  # for the bottom pieces, check whether it is okay to move them
@@ -380,9 +372,9 @@ class RubixCube:
             else:
                 # if neither cross nor corners are solved, solve for both
                 cross_map = list(map_blues(cross).items())
+                # fix the initial top before preceding with solving the top and corners
                 initial_top(list(filter(lambda t: t[0][0] == 'top', cross_map)))
-                for algorithm in self.top_steps:
-                    self._eval_step(algorithm)   # fix the initial top before preceding with solving the top and corners
+                self._eval_list(self.top_steps)
                 # move the side cross to the top or bottom, solve the bottom crosses, then solve for the corners
                 solve_side_crosses()
                 solve_bottom()
@@ -668,6 +660,17 @@ class RubixCube:
         else:
             steps.append(alg)
             eval(alg)
+
+
+    def _eval_list(self, alg_list: list) -> None:
+        '''Given a list of algorithms, evaluate every algorithm in the list'''
+        for algorithm in alg_list:
+            if type(algorithm) == tuple:
+                for step in algorithm:
+                    eval(step)
+            else:
+                eval(algorithm)
+                
             
     def _redundancy_two(self, l: list) -> None:
         '''Gets rid of redundant complementary algorithms'''
@@ -730,20 +733,3 @@ class InvalidCubeError(Exception):
     '''Raised when the cube is configured in an impossible way'''
     pass
   
-
-print('ORIGINAL CUBE:')
-for face in cube:
-    print(face, cube[face])
-print('---------------------------------')
-top = RubixCube(cube).SolveTop()
-middle = RubixCube(cube).SolveMiddle()
-cross = RubixCube(cube).SolveTopCross()
-finish = RubixCube(cube).SolveRest()
-print('ALGORITHMS:')
-for each in (top + middle + cross + finish):
-    print(each)
-print('number of algorithms: ', len(top + middle + cross + finish))
-print('---------------------------------')
-print('END RESULT CUBE:')
-for face in cube:
-    print(face, cube[face])
